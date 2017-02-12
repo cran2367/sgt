@@ -1,2 +1,2 @@
-# sgtS
+# SGT
 Sequence Graph Transform
