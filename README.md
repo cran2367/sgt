@@ -29,6 +29,7 @@ seq          <- "BBACACAABA"
 kappa <- 5
 ###### Algorithm 1 ######
 sgt_parts_alg1 <- f_sgt_parts(sequence = seq, kappa = kappa, alphabet_set_size = length(alphabet_set))
+print(sgt_parts_alg1)
 ```
 
 *Result*
