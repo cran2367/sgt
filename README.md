@@ -28,6 +28,7 @@ kappa <- 5
 sgt_parts_alg1 <- f_sgt_parts(sequence = seq, kappa = kappa, alphabet_set_size = length(c("A","B","C"))
 ```
 
+*Result*
 ```
 $W0
    A B C
@@ -48,6 +49,7 @@ sgt <- f_SGT(W_kappa = sgt_parts_alg1$W_kappa, W0 = sgt_parts_alg1$W0,
 print(sgt)
 ```
 
+*Result*
 ```
           A          B         C
 A 0.3693614 0.44246287 0.5376371
@@ -84,9 +86,12 @@ Identifying similar sequences with good accuracy, and also low false positives (
 
 3. _Significant amount of noise_: a good amount of noise is a nemesis to most sequence similarity algorithms. It often results into high false positives.
 
+### SGT Clustering
+
 The dataset here is a good example for the above challenges. We run clustering on the dataset in `main.R`. The sequences in the dataset are from 5 (=K) clusters. We use this ground truth about the number of clusters as input to our execution below. Although, in reality, the true number of clusters is unknown for a data, here we are demonstrating the SGT implementation. Regardless, using the _random search procedure_ discussed in Sec.SGT-ALGORITHM in [1], we could find the number of clusters as equal to 5. For simplicity it has been kept out of this demonstration.
 
 > Other state-of-the-art sequence clustering methods had significantly poorer performance even with the number of true clusters (K=5). HMM had good performance but significantly higher computation time.
+
 
 ```
 ## The dataset contains all roman letters, A-Z.
@@ -108,7 +113,7 @@ clustering_output <- f_kmeans(input_data = input_data, K = K, alphabet_set_size 
 cc <- f_clustering_accuracy(actual = c(strtoi(dataset[,1])), pred = c(clustering_output$class), K = K, type = "f1")
 print(cc)
 ```
-
+*Result*
 ```
 $cc
 Confusion Matrix and Statistics
@@ -148,3 +153,65 @@ F1
  1 
 ```
 
+As we can see the clustering result is accurate with no false-positives. The f1-score is 1.0.
+
+### PCA on SGT & Clustering
+
+For demonstrating PCA on SGT for dimension reduction and then performing clustering, we added another code snippet. PCA becomes more important on datasets where SGT's are sparse. A sparse SGT is present when the alphabet set is large but the observed sequences contain only a few of those alphabets. For example, the alphabet set for sequence dataset of music listening history will have thousands to millions of songs, but a single sequence will have only a few of them
+
+```
+######## Clustering on Principal Components of SGT features ########
+num_pcs <- 5  # Number of principal components we want
+input_data_pcs <- f_pcs(input_data = input_data, PCs = num_pcs)$input_data_pcs
+
+clustering_output_pcs <- f_kmeans(input_data = input_data_pcs, K = K, alphabet_set_size = sqrt(num_pcs), trace = F)
+
+cc <- f_clustering_accuracy(actual = c(strtoi(dataset[,1])), pred = c(clustering_output_pcs$class), K = K, type = "f1")  
+print(cc)
+```
+
+*Result*
+```
+$cc
+Confusion Matrix and Statistics
+
+          Reference
+Prediction  a  b  c  d  e
+         a 50  0  0  0  0
+         b  0 66  0  0  0
+         c  0  0 60  0  0
+         d  0  0  0 55  0
+         e  0  0  0  0 68
+
+Overall Statistics
+                                     
+               Accuracy : 1          
+                 95% CI : (0.9877, 1)
+    No Information Rate : 0.2274     
+    P-Value [Acc > NIR] : < 2.2e-16  
+                                     
+                  Kappa : 1          
+ Mcnemar's Test P-Value : NA         
+
+Statistics by Class:
+
+                     Class: a Class: b Class: c Class: d Class: e
+Sensitivity            1.0000   1.0000   1.0000   1.0000   1.0000
+Specificity            1.0000   1.0000   1.0000   1.0000   1.0000
+Pos Pred Value         1.0000   1.0000   1.0000   1.0000   1.0000
+Neg Pred Value         1.0000   1.0000   1.0000   1.0000   1.0000
+Prevalence             0.1672   0.2207   0.2007   0.1839   0.2274
+Detection Rate         0.1672   0.2207   0.2007   0.1839   0.2274
+Detection Prevalence   0.1672   0.2207   0.2007   0.1839   0.2274
+Balanced Accuracy      1.0000   1.0000   1.0000   1.0000   1.0000
+
+$F1
+F1 
+ 1 
+ ```
+The clustering result remains accurate upon clustering the PCs on the SGT of sequences.
+---
+## NOTE:
+1. Less alphabets pain
+2. Author believes a faster parallel implementation should be done
+3. Research level code
