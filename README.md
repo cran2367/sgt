@@ -57,4 +57,13 @@ C 0.4541361 0.06869332 0.2144920
 ```
 
 ## Using the code
-Open file `main.R` and execute line-by-line to understand the process. In this sample execution, we 
+Open file `main.R` and execute line-by-line to understand the process. In this sample execution, we present SGT estimation from either of the two algorithms presented in [1]. The first part is for understanding the SGT computation process.
+
+In the next part we demonstrate sequence clustering using SGT on a synthesized sample dataset. The sequence lengths in the dataset ranges between (45, 711) with a uniform distribution (hence, average length is ~365). Similar sequences in the dataset has some common substrings. This common substrings can be of any length. Also, the order of the instances of these substrings is arbitrary and random in different sequences. For example,
+```AKQZTAEEYTDZUXXIRZSTAYFUIXCPDZUXMCSMEMVDVGMTDRDDEJWNDGDPSVPKJHKQBRKMXHHNLUBXBMHISQWEHGXGDDCADPVKESYQXGRLRZSTAYFUOQZTAWTBRKMXHHNWYRYBRKMXHHNPRNRBRKMXHHNPBMHIUSVXBMHIWXQRZSTAYFUCWRZSTAYFUJEJDZUXPUEMVDVGMTOHUDZUXLOQSKESYQXGRCTLBRKMXHHNNJZDZUXTFWZKESYQXGRUATSNDGDPWEBNIQZMBNIQKESYQXGRSZTTPTZWRMEMVDVGMTAPBNIRPSADZUXJTEDESOKPTLJEMZTDLUIPSMZTDLUIWYDELISBRKMXHHNMADEDXKESYQXGRWEFRZSTAYFUDNDGDPKYEKPTSXMKNDGDPUTIQJHKSDZUXVMZTDLUINFNDGDPMQZTAPPKBMHIUQIUBMHIEKKJHK
+```
+
+```
+SDBRKMXHHNRATBMHIYDZUXMTRMZTDLUIEKDEIBQZTAZOAMZTDLUILHGXGDDCAZEXJHKTDOOHGXGDDCAKZHNEMVDVGMTIHZXDEROEQDEGZPPTDBCLBMHIJMMKESYQXGRGDPTNBRKMXHHNGCBYNDGDPKMWKBMHIDQDZUXIHKVBMHINQZTAHBRKMXHHNIRBRKMXHHNDISDZUXWBOYEMVDVGMTNTAQZTA
+```
+The average noise in the sequences is about 40%. A noise means
