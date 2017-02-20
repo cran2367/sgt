@@ -23,10 +23,12 @@ If using this code, please cite the following:
 Apply the algorithm on a sequence `BBACACAABA`. The parts of SGT, W<sup>(0)</sup> and W<sup>(\kappa)</sup>, in Algorithm 1 & 2 in [1], and the resulting SGT estimate will be:
 
 ```
-seq <- "BBACACAABA"
+alphabet_set <- c("A", "B", "C")  # Denoted by variable V in [1]
+seq          <- "BBACACAABA"
+
 kappa <- 5
 ###### Algorithm 1 ######
-sgt_parts_alg1 <- f_sgt_parts(sequence = seq, kappa = kappa, alphabet_set_size = length(c("A","B","C"))
+sgt_parts_alg1 <- f_sgt_parts(sequence = seq, kappa = kappa, alphabet_set_size = length(alphabet_set))
 ```
 
 *Result*
