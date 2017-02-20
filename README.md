@@ -214,7 +214,6 @@ The clustering result remains accurate upon clustering the PCs on the SGT of seq
 
 
 -----------------------
-## NOTE:
-1. Small alphabet set: If the alphabet set is small, such as in gene sequences, the 
-2. Author believes a faster parallel implementation should be done
-3. Research level code
+#### NOTE:
+1. Small alphabet set: If the alphabet set is small (< 4), SGT's performance may not be good. This is because the feature space becomes too small.
+2. Faster implementation: The provided code is a research level code, not optimized for the best of speed. Significant speed improvements can be made, e.g. multithreading the SGT estimation for sequences in a dataset.
