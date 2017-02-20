@@ -20,7 +20,7 @@ If using this code, please cite the following:
 }
 
 ## Quick validation of your code
-Apply the algorithm on a sequence `BBACACAABA`. The parts of SGT, W<sup>(0)</sup> and W<sup>(\kappa)</sup>, in Algorithm 1 & 2 in [1], and the resulting SGT estimate will be:
+Apply the algorithm on a sequence `BBACACAABA`. The parts of SGT, W<sup>(0)</sup> and W<sup>(\kappa)</sup>, in Algorithm 1 & 2 in [1], and the resulting SGT estimate will be (line-by-line execution of `main.R`):
 
 ```
 alphabet_set <- c("A", "B", "C")  # Denoted by variable V in [1]
