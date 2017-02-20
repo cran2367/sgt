@@ -15,4 +15,4 @@ Ranjan, Chitta, Samaneh Ebrahimi, and Kamran Paynabar. "Sequence Graph Transform
 }
 
 ## Quick validation of your code
-For a sample sequence, `BBACACAABA`, the parts of SGT, W<sup>(0)</sup>
+For a sample sequence, `BBACACAABA`, the parts of SGT, W<sup>(0)</sup> and W<sup>(\kappa)</sup>
