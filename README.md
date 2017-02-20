@@ -56,10 +56,10 @@ C 0.4541361 0.06869332 0.2144920
 
 ```
 
-## Using the code
+## Illustration and use of the code
 Open file `main.R` and execute line-by-line to understand the process. In this sample execution, we present SGT estimation from either of the two algorithms presented in [1]. The first part is for understanding the SGT computation process.
 
-In the next part we demonstrate sequence clustering using SGT on a synthesized sample dataset. The sequence lengths in the dataset ranges between (45, 711) with a uniform distribution (hence, average length is ~365). Similar sequences in the dataset has some common substrings. This common substrings can be of any length. Also, the order of the instances of these substrings is arbitrary and random in different sequences. For example,
+In the next part we demonstrate sequence clustering using SGT on a synthesized sample dataset. The sequence lengths in the dataset ranges between (45, 711) with a uniform distribution (hence, average length is ~365). Similar sequences in the dataset has some similar patterns, in turn common substrings. These common substrings can be of any length. Also, the order of the instances of these substrings is arbitrary and random in different sequences. For example, the following two sequences have common patterns. One common subtring in both is `QZTA` which is present arbitrarily in both sequences. The two sequences have other common substrings as well. Other than these commonlities there are significant amount of noise present in the sequences. On average, about 40% of the letters in all sequences in the dataset are noise.
 
 ```
 AKQZTAEEYTDZUXXIRZSTAYFUIXCPDZUXMCSMEMVDVGMTDRDDEJWNDGDPSVPKJHKQBRKMXHHNLUBXBMHISQ
@@ -75,4 +75,76 @@ SDBRKMXHHNRATBMHIYDZUXMTRMZTDLUIEKDEIBQZTAZOAMZTDLUILHGXGDDCAZEXJHKTDOOHGXGDDCAK
 NEMVDVGMTIHZXDEROEQDEGZPPTDBCLBMHIJMMKESYQXGRGDPTNBRKMXHHNGCBYNDGDPKMWKBMHIDQDZUXI
 HKVBMHINQZTAHBRKMXHHNIRBRKMXHHNDISDZUXWBOYEMVDVGMTNTAQZTA
 ```
-The average noise in the sequences is about 40%. A noise means
+
+Identifying similar sequences with good accuracy, and also low false positives (calling sequences similar when they are not) is difficult in such situations due to, 
+
+1. _Different lengths of the sequences_: due to different lengths figuring out that two sequences have same inherent pattern is not straightforward. Normalizing the pattern features by the sequence length is a non-trivial problem.
+
+2. _Commonalities are not in order_: as shown in the above example sequences, the common substrings are anywhere. This makes methods such as alignment-based approaches infeasible.
+
+3. _Significant amount of noise_: a good amount of noise is a nemesis to most sequence similarity algorithms. It often results into high false positives.
+
+The dataset here is a good example for the above challenges. We run clustering on the dataset in `main.R`. The sequences in the dataset are from 5 (=K) clusters. We use this ground truth about the number of clusters as input to our execution below. Although, in reality, the true number of clusters is unknown for a data, here we are demonstrating the SGT implementation. Regardless, using the _random search procedure_ discussed in Sec.SGT-ALGORITHM in [1], we could find the number of clusters as equal to 5. For simplicity it has been kept out of this demonstration.
+
+> Other state-of-the-art sequence clustering methods had significantly poorer performance even with the number of true clusters (K=5). HMM had good performance but significantly higher computation time.
+
+```
+## The dataset contains all roman letters, A-Z.
+dataset <- read.csv("dataset.csv", header = T, stringsAsFactors = F)
+
+sgt_parts_sequences_in_dataset <- f_SGT_for_each_sequence_in_dataset(sequence_dataset = dataset, 
+                                                                     kappa = 5, alphabet_set = LETTERS, 
+                                                                     spp = NULL, sgt_using_alphabet_positions = T)
+  
+  
+input_data <- f_create_input_kmeans(all_seq_sgt_parts = sgt_parts_sequences_in_dataset, 
+                                    length_normalize = T, 
+                                    alphabet_set_size = 26, 
+                                    kappa = 5, trace = TRUE, 
+                                    inv.powered = T)
+K = 5
+clustering_output <- f_kmeans(input_data = input_data, K = K, alphabet_set_size = 26, trace = T)
+
+cc <- f_clustering_accuracy(actual = c(strtoi(dataset[,1])), pred = c(clustering_output$class), K = K, type = "f1")
+print(cc)
+```
+
+```
+$cc
+Confusion Matrix and Statistics
+
+          Reference
+Prediction  a  b  c  d  e
+         a 50  0  0  0  0
+         b  0 66  0  0  0
+         c  0  0 60  0  0
+         d  0  0  0 55  0
+         e  0  0  0  0 68
+
+Overall Statistics
+                                     
+               Accuracy : 1          
+                 95% CI : (0.9877, 1)
+    No Information Rate : 0.2274     
+    P-Value [Acc > NIR] : < 2.2e-16  
+                                     
+                  Kappa : 1          
+ Mcnemar's Test P-Value : NA         
+
+Statistics by Class:
+
+                     Class: a Class: b Class: c Class: d Class: e
+Sensitivity            1.0000   1.0000   1.0000   1.0000   1.0000
+Specificity            1.0000   1.0000   1.0000   1.0000   1.0000
+Pos Pred Value         1.0000   1.0000   1.0000   1.0000   1.0000
+Neg Pred Value         1.0000   1.0000   1.0000   1.0000   1.0000
+Prevalence             0.1672   0.2207   0.2007   0.1839   0.2274
+Detection Rate         0.1672   0.2207   0.2007   0.1839   0.2274
+Detection Prevalence   0.1672   0.2207   0.2007   0.1839   0.2274
+Balanced Accuracy      1.0000   1.0000   1.0000   1.0000   1.0000
+
+$F1
+F1 
+ 1 
+```
+
