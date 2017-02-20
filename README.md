@@ -209,9 +209,12 @@ $F1
 F1 
  1 
  ```
+
 The clustering result remains accurate upon clustering the PCs on the SGT of sequences.
----
+
+
+-----------------------
 ## NOTE:
-1. Less alphabets pain
+1. Small alphabet set: If the alphabet set is small, such as in gene sequences, the 
 2. Author believes a faster parallel implementation should be done
 3. Research level code
