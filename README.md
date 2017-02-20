@@ -62,6 +62,8 @@ C 0.4541361 0.06869332 0.2144920
 
 ```
 
+Similarly, the execution for Algorithm-2 is shown in `main.R`.
+
 ## Illustration and use of the code
 Open file `main.R` and execute line-by-line to understand the process. In this sample execution, we present SGT estimation from either of the two algorithms presented in [1]. The first part is for understanding the SGT computation process.
 
