@@ -13,3 +13,6 @@ Ranjan, Chitta, Samaneh Ebrahimi, and Kamran Paynabar. "Sequence Graph Transform
   journal={arXiv preprint arXiv:1608.03533},
   year={2016}
 }
+
+## Quick validation of your code
+
