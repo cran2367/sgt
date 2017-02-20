@@ -221,6 +221,6 @@ The clustering result remains accurate upon clustering the PCs on the SGT of seq
 1. Simplicity: SGT's is simple to implement. There is no numerical optimization or other solution search algorithm required to estimate SGT. This makes it deterministic and powerful.
 2. Length sensitive: The length sensitive version of SGT can be easily tried by changing the marked arguments in `main.R`.
 
-#### NOTE:
+#### Note:
 1. Small alphabet set: If the alphabet set is small (< 4), SGT's performance may not be good. This is because the feature space becomes too small.
 2. Faster implementation: The provided code is a research level code, not optimized for the best of speed. Significant speed improvements can be made, e.g. multithreading the SGT estimation for sequences in a dataset.
