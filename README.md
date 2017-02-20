@@ -155,6 +155,8 @@ F1
 
 As we can see the clustering result is accurate with no false-positives. The f1-score is 1.0.
 
+> Note: Do not run function `f_clustering_accuracy` when `K` is larger (> 7), because it does a permutation operation which will become expensive.
+
 ### PCA on SGT & Clustering
 
 For demonstrating PCA on SGT for dimension reduction and then performing clustering, we added another code snippet. PCA becomes more important on datasets where SGT's are sparse. A sparse SGT is present when the alphabet set is large but the observed sequences contain only a few of those alphabets. For example, the alphabet set for sequence dataset of music listening history will have thousands to millions of songs, but a single sequence will have only a few of them
