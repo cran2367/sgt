@@ -1,5 +1,5 @@
-# SGT
-Sequence Graph Transform
+# Sequence Graph Transform (SGT)
+
 
 This is open source code repository for SGT. Sequence Graph Transform extracts the short- and long-term sequence features and embeds them in a finite-dimensional feature space. Importantly, SGT has low computation and can extract any amount of short- to long-term patterns without any increase in the computation. These properties are proved theoretically and demonstrated on real data in this paper: https://arxiv.org/abs/1608.03533.
 
