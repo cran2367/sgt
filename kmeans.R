@@ -123,6 +123,7 @@ f_kmeans_procedure <- function(input_data, K, alphabet_set_size = 26, max_iterat
   # input_data      The input data matrix, each row a data point and the columns are its features
   # K               The number of clusters
   
+  set.seed(12)  # To ensure reproducibility  
   n          <- nrow(input_data)
   
   # Step 0: Initialization

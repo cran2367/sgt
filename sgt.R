@@ -430,3 +430,20 @@ f_reorder_class_assignment <- function(class)
   out <- list(class_mapped = final_class, consecutive_class = final_class[,2])
   return(out)
 }
+
+
+f_seq_len_mu_var <- function(sequences)
+{
+  # A function that will find the mean and var of the sequence lengths
+  seq.lens <- NULL
+  for(i in 1:nrow(sequences))
+  {
+    tmp <- f_seq_split(sequences[i,'seq'])
+    seq.lens <- c(seq.lens, length(tmp))
+  }
+  seq.lens.mu  <- mean(seq.lens)
+  seq.lens.var <- var(seq.lens)
+  
+  out <- list(seq.lens.mu = seq.lens.mu, seq.lens.var = seq.lens.var, seq.lens = seq.lens)
+  return(out)
+}

@@ -16,9 +16,11 @@ kappa <- 5
 
 ###### Algorithm 1 ######
 sgt_parts_alg1 <- f_sgt_parts(sequence = seq, kappa = kappa, alphabet_set_size = alphabet_set_size)
+print(sgt_parts_alg1)
 
 sgt <- f_SGT(W_kappa = sgt_parts_alg1$W_kappa, W0 = sgt_parts_alg1$W0, 
              Len = sgt_parts_alg1$Len, kappa = kappa)  # Set Len = NULL for length-sensitive SGT.
+print(sgt)
 
 ###### Algorithm 2 ######
 seq_split <- f_seq_split(sequence = seq)
@@ -36,7 +38,7 @@ sgt <- f_SGT(W_kappa = sgt_parts_alg2$W_kappa, W0 = sgt_parts_alg2$W0,
 ######## Demo: Performing a Clustering operation on a seq dataset ##########
 ############################################################################
 
-## The dataset contains
+## The dataset contains all roman letters, A-Z.
 dataset <- read.csv("dataset.csv", header = T, stringsAsFactors = F)
 
 sgt_parts_sequences_in_dataset <- f_SGT_for_each_sequence_in_dataset(sequence_dataset = dataset, 
@@ -56,7 +58,7 @@ cc <- f_clustering_accuracy(actual = c(strtoi(dataset[,1])), pred = c(clustering
 print(cc)
 
 ######## Clustering on Principal Components of SGT features ########
-num_pcs <- 10  # Number of principal components we want
+num_pcs <- 5  # Number of principal components we want
 input_data_pcs <- f_pcs(input_data = input_data, PCs = num_pcs)$input_data_pcs
 
 clustering_output_pcs <- f_kmeans(input_data = input_data_pcs, K = K, alphabet_set_size = sqrt(num_pcs), trace = F)
