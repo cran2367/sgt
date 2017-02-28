@@ -229,3 +229,7 @@ The clustering result remains accurate upon clustering the PCs on the SGT of seq
 #### Note:
 1. Small alphabet set: If the alphabet set is small (< 4), SGT's performance may not be good. This is because the feature space becomes too small.
 2. Faster implementation: The provided code is a research level code, not optimized for the best of speed. Significant speed improvements can be made, e.g. multithreading the SGT estimation for sequences in a dataset.
+
+#### Additional resource:
+Python implementation: Please refer to https://github.com/datashinobi/Sequence-Graph-transform
+Thanks to Yassine for providing the Python implementation.
