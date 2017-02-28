@@ -231,5 +231,8 @@ The clustering result remains accurate upon clustering the PCs on the SGT of seq
 2. Faster implementation: The provided code is a research level code, not optimized for the best of speed. Significant speed improvements can be made, e.g. multithreading the SGT estimation for sequences in a dataset.
 
 #### Additional resource:
-Python implementation: Please refer to https://github.com/datashinobi/Sequence-Graph-transform
+Python implementation: Please refer to 
+
+https://github.com/datashinobi/Sequence-Graph-transform
+
 Thanks to Yassine for providing the Python implementation.
