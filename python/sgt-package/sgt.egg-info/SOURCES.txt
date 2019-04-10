@@ -1,0 +1,7 @@
+README.md
+setup.py
+sgt/__init__.py
+sgt.egg-info/PKG-INFO
+sgt.egg-info/SOURCES.txt
+sgt.egg-info/dependency_links.txt
+sgt.egg-info/top_level.txt
