@@ -14,6 +14,14 @@ seq <- "BBACACAABA"
 
 kappa <- 5
 
+# Testing
+alphabet_set      <- c("A", "B", "C", "D", "E", "F")
+alphabet_set_size <- length(alphabet_set)
+
+seq <- "EF"
+
+kappa <- 10
+
 ###### Algorithm 1 ######
 sgt_parts_alg1 <- f_sgt_parts(sequence = seq, kappa = kappa, alphabet_set_size = alphabet_set_size)
 print(sgt_parts_alg1)

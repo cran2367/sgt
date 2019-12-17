@@ -1,0 +1,7 @@
+README.md
+setup.py
+sgt/__init__.py
+sgt_cran2367_bugfix_2.egg-info/PKG-INFO
+sgt_cran2367_bugfix_2.egg-info/SOURCES.txt
+sgt_cran2367_bugfix_2.egg-info/dependency_links.txt
+sgt_cran2367_bugfix_2.egg-info/top_level.txt

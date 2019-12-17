@@ -3,6 +3,7 @@ import pandas as pd
 from itertools import chain
 import warnings
 
+
 class Sgt():
     '''
     Compute embedding of a single or a collection of discrete item 
@@ -22,30 +23,29 @@ class Sgt():
     Parameters
     ----------
     Input
-    
+
     alphabets       Optional. The set of alphabets that make up all 
                     the sequences in the dataset. If not passed, the
                     alphabet set is automatically computed as the 
                     unique set of elements that make all the sequences.
-    
+
     kappa           Tuning parameter, kappa > 0, to change the extraction of 
                     long-term dependency. Higher the value the lesser
                     the long-term dependency captured in the embedding.
                     Typical values for kappa are 1, 5, 10.
-                   
+
     lengthsensitive Default false. This is set to true if the embedding of
                     should have the information of the length of the sequence.
                     If set to false then the embedding of two sequences with
                     similar pattern but different lengths will be the same.
                     lengthsensitive = false is similar to length-normalization.
     '''
-    
 
-    def __init__(self, alphabets=np.array([]), kappa=1, lengthsensitive=True):
+    def __init__(self, alphabets=[], kappa=1, lengthsensitive=True):
         self.alphabets = alphabets
         self.kappa = kappa
         self.lengthsensitive = lengthsensitive
-        
+
     def getpositions(self, sequence, alphabets):
         '''
         Compute index position elements in the sequence
@@ -53,10 +53,11 @@ class Sgt():
 
         Return list of tuples [(value, position)]
         '''
-        positions = [(v, np.where(sequence==v)) for v in alphabets if v in sequence]
-        
+        positions = [(v, np.where(sequence == v))
+                     for v in alphabets if v in sequence]
+
         return positions
-    
+
     def fit(self, sequence, alphabets, lengthsensitive, kappa, flatten):
         '''
         Extract Sequence Graph Transform features using Algorithm-2.
@@ -74,13 +75,13 @@ class Sgt():
 
         '''
         
-        size = alphabets.shape[0]
+        size = len(alphabets)
         l = 0
-        W0, Wk = np.zeros((size,size)), np.zeros((size,size))
+        W0, Wk = np.zeros((size, size)), np.zeros((size, size))
         positions = self.getpositions(sequence, alphabets)
-        
+
         alphabets_in_sequence = np.unique(sequence)
-        
+
         for i, u in enumerate(alphabets_in_sequence):
             index = [p[0] for p in positions].index(u)
 
@@ -91,66 +92,69 @@ class Sgt():
 
                 V2 = np.array(positions[index][1]).ravel()
 
-                C = [(i,j) for i in U for j in V2 if j > i]
+                C = [(i, j) for i in U for j in V2 if j > i]
 
-                W0[i,j] = len(C)
+                cu = np.array([i[0] for i in C])
+                cv = np.array([i[1] for i in C])
 
-                cu = np.array([i[0] for i in C]) 
-                cv = np.array([i[1] for i in C]) 
+                # Insertion positions
+                pos_i = alphabets.index(u)
+                pos_j = alphabets.index(v)
 
-                Wk[i,j] = np.sum(np.exp(-kappa * np.abs(cu - cv)))
+                W0[pos_i, pos_j] = len(C)
+
+                Wk[pos_i, pos_j] = np.sum(np.exp(-kappa * np.abs(cu - cv)))
 
             l += U.shape[0]
 
         if lengthsensitive:
             W0 /= l
 
-        W0[np.where(W0==0)] = 1e7  #avoid divide by 0
+        W0[np.where(W0 == 0)] = 1e7  # avoid divide by 0
 
         sgt = np.power(np.divide(Wk, W0), 1/kappa)
-        
+
         if(flatten):
             sgt = sgt.flatten()
         else:
             sgt = pd.DataFrame(sgt)
-            sgt.columns = alphabets.tolist()
-            sgt.index = alphabets.tolist()
-        
+            sgt.columns = alphabets
+            sgt.index = alphabets
+
         return sgt
-    
+
     def __flatten(self, listOfLists):
         "Flatten one level of nesting"
         flat = [x for sublist in listOfLists for x in sublist]
         return flat
 
     def __estimate_alphabets(self, corpus):
-        return(np.unique(np.asarray(self.__flatten(corpus))))
-    
+        return(np.unique(np.asarray(self.__flatten(corpus))).tolist())
+
     def set_alphabets(self, corpus):
         self.alphabets = self.__estimate_alphabets(corpus)
         return self
-        
-    def fit_transform(self, corpus):
+
+    def fit_transform(self, corpus, flatten=True):
         '''
         corpus       A list of sequences. Each sequence is a list of alphabets.
         '''
-        if(self.alphabets.size == 0):
+        if(len(self.alphabets) == 0):
             self.alphabets = self.__estimate_alphabets(corpus)
-            
-        sgt = [self.fit(sequence=np.array(sequence), alphabets=self.alphabets, \
-                          lengthsensitive=self.lengthsensitive, kappa=self.kappa, \
-                          flatten = True).tolist() for sequence in corpus]
+
+        sgt = [self.fit(sequence=np.array(sequence), alphabets=self.alphabets,
+                        lengthsensitive=self.lengthsensitive, kappa=self.kappa,
+                        flatten=flatten).tolist() for sequence in corpus]
 
         return(np.array(sgt))
-    
-    def transform(self, corpus):
+
+    def transform(self, corpus, flatten=True):
         '''
         Fit on sequence corpus that already fitted. The alphabets set should
         already be initialized.
         '''
-        sgt = [self.fit(sequence=np.array(sequence), alphabets=self.alphabets, \
-                  lengthsensitive=self.lengthsensitive, kappa=self.kappa, \
-                  flatten = True).tolist() for sequence in corpus]
+        sgt = [self.fit(sequence=np.array(sequence), alphabets=self.alphabets,
+                        lengthsensitive=self.lengthsensitive, kappa=self.kappa,
+                        flatten=flatten).tolist() for sequence in corpus]
 
         return(np.array(sgt))
-
