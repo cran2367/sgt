@@ -20,7 +20,14 @@ If using this code or dataset, please cite the following:
 }
 
 
-## Python Examples
+## Sequence Mining with Python
+
+### Install `sgt`
+You can install `sgt` directly using a pip command.
+
+```$ pip install sgt```
+
+### Testing
 
 ```python
 import numpy as np
@@ -65,7 +72,7 @@ tf.__version__
 
 
 
-## Test Examples
+#### Test Examples
 
 
 ```python
@@ -427,7 +434,7 @@ print ('Average f1 score', np.mean(test_F1))
     Average f1 score 1.0
 
 
-## Weblog Data Analysis
+## Weblog Sequence Data Analysis
 This data sample is taken from https://www.ll.mit.edu/r-d/datasets/1998-darpa-intrusion-detection-evaluation-dataset. 
 This is a network intrusion data containing audit logs and any attack as a positive label. Since, network intrusion is a rare event, the data is unbalanced. Here we will,
 - build a sequence classification model to predict a network intrusion.
