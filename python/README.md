@@ -11,7 +11,8 @@
 
 Sequence Graph Transform (SGT) is a sequence embedding function. SGT extracts the short- and long-term sequence features and embeds them in a finite-dimensional feature space. With SGT you can tune the amount of short- to long-term patterns extracted in the embeddings without any  increase in the computation."
 
-```class Sgt():
+```
+class Sgt():
     '''
     Compute embedding of a single or a collection of discrete item 
     sequences. A discrete item sequence is a sequence made from a set

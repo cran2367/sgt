@@ -10,21 +10,21 @@ X=protein_data['Sequence']
 
 import string
 # import sgtdev as sgt
-import sgt
+from sgt import Sgt
 # Spark
 from pyspark import SparkContext
 sc = SparkContext("local", "app")
 rdd = sc.parallelize(sequences)
-sgt_sc = sgt.Sgt(kappa = 1, lengthsensitive = False, mode="spark", alphabets=list(string.ascii_uppercase))
+sgt_sc = Sgt(kappa = 1, lengthsensitive = False, mode="spark", alphabets=list(string.ascii_uppercase))
 rdd_embedding = sgt_sc.fit_transform(corpus=rdd)
 
 sc.stop()
 # Multi-processing
-sgt_mp = sgt.Sgt(kappa = 1, lengthsensitive = False, mode="multiprocessing", processors=3)
+sgt_mp = Sgt(kappa = 1, lengthsensitive = False, mode="multiprocessing", processors=3)
 mp_embedding = sgt_mp.fit_transform(corpus=sequences)
 mp_embedding = sgt_mp.transform(corpus=sequences)
 # Default
-sgt = sgt.Sgt(kappa = 1, lengthsensitive = False)
+sgt = Sgt(kappa = 1, lengthsensitive = False)
 embedding = sgt.fit_transform(corpus=sequences)
 
 # Spark again
@@ -34,7 +34,7 @@ sc = SparkContext("local", "app")
 
 rdd = sc.parallelize(corpus)
 
-sgt_sc = sgt.Sgt(kappa = 1, 
+sgt_sc = Sgt(kappa = 1, 
                  lengthsensitive = False, 
                  mode="spark", 
                  alphabets=["A", "B", "C", "D", "Z"],
