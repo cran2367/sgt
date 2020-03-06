@@ -1,4 +1,7 @@
-*.Rproj
+*__pychache__/
+*.Rproj*
+*.Rhistory
+*logs/
 *.DS_Store
 *.ipynb_checkpoints
 *build/
