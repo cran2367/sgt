@@ -2,8 +2,7 @@ import numpy as np
 import pandas as pd
 from itertools import chain
 import warnings
-
-
+    
 class Sgt():
     '''
     Compute embedding of a single or a collection of discrete item 
@@ -24,10 +23,13 @@ class Sgt():
     ----------
     Input
 
-    alphabets       Optional. The set of alphabets that make up all 
+    alphabets       Optional, except if mode is Spark. 
+                    The set of alphabets that make up all 
                     the sequences in the dataset. If not passed, the
                     alphabet set is automatically computed as the 
                     unique set of elements that make all the sequences.
+                    A list or 1d-array of the set of elements that make up the                               sequences. For example, np.array(["A", "B", "C"].
+                    If mode is 'spark', the alphabets are necessary.
 
     kappa           Tuning parameter, kappa > 0, to change the extraction of 
                     long-term dependency. Higher the value the lesser
@@ -39,12 +41,47 @@ class Sgt():
                     If set to false then the embedding of two sequences with
                     similar pattern but different lengths will be the same.
                     lengthsensitive = false is similar to length-normalization.
+    
+    flatten         Default True. If True the SGT embedding is flattened and returned as
+                    a vector. Otherwise, it is returned as a matrix with the row and col
+                    names same as the alphabets. The matrix form is used for            
+                    interpretation purposes. Especially, to understand how the alphabets
+                    are "related". Otherwise, for applying machine learning or deep
+                    learning algorithms, the embedding vectors are required.
+    
+    mode            Choices in {'default', 'multiprocessing', 'spark'}.
+    
+    processors      Used if mode is 'multiprocessing'. By default, the 
+                    number of processors used in multiprocessing is
+                    number of available - 1.
+    
+    lazy            Used if mode is 'spark'. Default is False. If False,
+                    the SGT embeddings are computed for each sequence
+                    in the inputted RDD and returned as a list of 
+                    embedding vectors. Otherwise, the RDD map is returned.
     '''
 
-    def __init__(self, alphabets=[], kappa=1, lengthsensitive=True):
+    def __init__(self, 
+                 alphabets=[], 
+                 kappa=1, 
+                 lengthsensitive=True, 
+                 flatten=True,
+                 mode='default', 
+                 processors=None,
+                 lazy=False):
+             
         self.alphabets = alphabets
         self.kappa = kappa
         self.lengthsensitive = lengthsensitive
+        self.flatten = flatten
+        self.mode = mode
+        self.processors = processors
+        
+        if self.processors==None:
+            import os
+            self.processors = os.cpu_count() - 1
+            
+        self.lazy = lazy
 
     def getpositions(self, sequence, alphabets):
         '''
@@ -57,28 +94,27 @@ class Sgt():
                      for v in alphabets if v in sequence]
 
         return positions
-
-    def fit(self, sequence, alphabets, lengthsensitive, kappa, flatten):
+    
+    def fit(self, sequence):
         '''
         Extract Sequence Graph Transform features using Algorithm-2.
 
         sequence            An array of discrete elements. For example,
                             np.array(["B","B","A","C","A","C","A","A","B","A"].
-        alphabets           An array of the set of elements that make up the sequences.
-                            For example, np.array(["A", "B", "C"].
-        lengthsensitive     A boolean set to false by default.
-        kappa               A positive value tuning parameter that is by default 1. 
-                            Typically selected kappa from {1, 5, 10}.
-        flatten
 
-        return: sgt matrix
+        return: sgt matrix or vector (depending on Flatten==False or True)
 
         '''
         
-        size = len(alphabets)
+        sequence = np.array(sequence)
+    
+        if(len(self.alphabets) == 0):
+            self.alphabets = self.__estimate_alphabets(sequence)
+
+        size = len(self.alphabets)
         l = 0
         W0, Wk = np.zeros((size, size)), np.zeros((size, size))
-        positions = self.getpositions(sequence, alphabets)
+        positions = self.getpositions(sequence, self.alphabets)
 
         alphabets_in_sequence = np.unique(sequence)
 
@@ -94,32 +130,32 @@ class Sgt():
 
                 C = [(i, j) for i in U for j in V2 if j > i]
 
-                cu = np.array([i[0] for i in C])
-                cv = np.array([i[1] for i in C])
+                cu = np.array([ic[0] for ic in C])
+                cv = np.array([ic[1] for ic in C])
 
                 # Insertion positions
-                pos_i = alphabets.index(u)
-                pos_j = alphabets.index(v)
+                pos_i = self.alphabets.index(u)
+                pos_j = self.alphabets.index(v)
 
                 W0[pos_i, pos_j] = len(C)
 
-                Wk[pos_i, pos_j] = np.sum(np.exp(-kappa * np.abs(cu - cv)))
+                Wk[pos_i, pos_j] = np.sum(np.exp(-self.kappa * np.abs(cu - cv)))
 
             l += U.shape[0]
 
-        if lengthsensitive:
+        if self.lengthsensitive:
             W0 /= l
 
         W0[np.where(W0 == 0)] = 1e7  # avoid divide by 0
 
-        sgt = np.power(np.divide(Wk, W0), 1/kappa)
+        sgt = np.power(np.divide(Wk, W0), 1/self.kappa)
 
-        if(flatten):
+        if(self.flatten):
             sgt = sgt.flatten()
         else:
             sgt = pd.DataFrame(sgt)
-            sgt.columns = alphabets
-            sgt.index = alphabets
+            sgt.columns = self.alphabets
+            sgt.index = self.alphabets
 
         return sgt
 
@@ -129,32 +165,63 @@ class Sgt():
         return flat
 
     def __estimate_alphabets(self, corpus):
-        return(np.unique(np.asarray(self.__flatten(corpus))).tolist())
+        if self.mode=='spark':
+            print("Error: Spark mode requires the alphabet list to be inputted. Exiting.")
+            sys.exit(1)
+        else:
+            return(np.unique(np.asarray(self.__flatten(corpus))).tolist())
 
     def set_alphabets(self, corpus):
         self.alphabets = self.__estimate_alphabets(corpus)
         return self
 
-    def fit_transform(self, corpus, flatten=True):
+    def fit_transform(self, corpus):
         '''
+        Inputs:
         corpus       A list of sequences. Each sequence is a list of alphabets.
         '''
+        
         if(len(self.alphabets) == 0):
             self.alphabets = self.__estimate_alphabets(corpus)
+        
+        if self.mode=='default':
+            sgt = [self.fit(sequence=sequence).tolist() for sequence in corpus]
+            return(np.array(sgt))
+        elif self.mode=='multiprocessing':
+            import multiprocessing
+            pool = multiprocessing.Pool(processes=self.processors)
+            sgt = pool.map(self.fit, corpus)
+            pool.close()
+            return(np.array(sgt))
+        elif self.mode=='spark':
+            import pyspark
+            if self.lazy: # The operation is not performed
+                sgt = corpus.map(self.fit) 
+            else: # The operation is performed and returns a list
+                sgt = corpus.map(self.fit).collect() 
+            
+            return(sgt)
 
-        sgt = [self.fit(sequence=np.array(sequence), alphabets=self.alphabets,
-                        lengthsensitive=self.lengthsensitive, kappa=self.kappa,
-                        flatten=flatten).tolist() for sequence in corpus]
-
-        return(np.array(sgt))
-
-    def transform(self, corpus, flatten=True):
+    def transform(self, corpus):
         '''
         Fit on sequence corpus that already fitted. The alphabets set should
         already be initialized.
+
+        Inputs:
+        corpus       A list of sequences. Each sequence is a list of alphabets.
+
         '''
-        sgt = [self.fit(sequence=np.array(sequence), alphabets=self.alphabets,
-                        lengthsensitive=self.lengthsensitive, kappa=self.kappa,
-                        flatten=flatten).tolist() for sequence in corpus]
+
+        if self.mode=='spark':
+            print("Error: In Spark mode .transform() is equivalent to .fit(). Use .fit() and ensure that the alphabets list is inputted in the Sgt() object declaration. Exiting.")
+            exit()
+        elif self.mode=='multiprocessing':
+            import multiprocessing
+            pool = multiprocessing.Pool(processes=self.processors)
+            sgt = pool.map(self.fit, corpus)
+            pool.close()
+            return(np.array(sgt))
+        else:
+            sgt = [self.fit(sequence=sequence).tolist() for sequence in corpus]
 
         return(np.array(sgt))

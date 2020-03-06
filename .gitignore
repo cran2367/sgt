@@ -1,2 +1,6 @@
 *.Rproj
 *.DS_Store
+*.ipynb_checkpoints
+*build/
+*sgt.egg-info
+*sgt_cran*

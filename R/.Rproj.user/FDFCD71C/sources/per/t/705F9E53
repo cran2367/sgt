@@ -5,15 +5,15 @@
     "dirty" : true,
     "encoding" : "UTF-8",
     "folds" : "",
-    "hash" : "0",
+    "hash" : "1166123414",
     "id" : "705F9E53",
     "lastKnownWriteTime" : 1554566991,
-    "last_content_update" : 1576604118667,
+    "last_content_update" : 1576844272059,
     "path" : "~/GoogleDrive/Work/Research/Sequence Clustering/sgt/R/main.R",
     "project_path" : "main.R",
     "properties" : {
-        "cursorPosition" : "32,0",
-        "scrollLine" : "15"
+        "cursorPosition" : "14,10",
+        "scrollLine" : "4"
     },
     "relative_order" : 1,
     "source_on_save" : false,
