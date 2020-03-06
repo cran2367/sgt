@@ -28,7 +28,8 @@ class Sgt():
                     the sequences in the dataset. If not passed, the
                     alphabet set is automatically computed as the 
                     unique set of elements that make all the sequences.
-                    A list or 1d-array of the set of elements that make up the                               sequences. For example, np.array(["A", "B", "C"].
+                    A list or 1d-array of the set of elements that make up the                               
+                    sequences. For example, np.array(["A", "B", "C"].
                     If mode is 'spark', the alphabets are necessary.
 
     kappa           Tuning parameter, kappa > 0, to change the extraction of 
@@ -36,7 +37,7 @@ class Sgt():
                     the long-term dependency captured in the embedding.
                     Typical values for kappa are 1, 5, 10.
 
-    lengthsensitive Default false. This is set to true if the embedding of
+    lengthsensitive Default False. This is set to true if the embedding of
                     should have the information of the length of the sequence.
                     If set to false then the embedding of two sequences with
                     similar pattern but different lengths will be the same.
@@ -64,7 +65,7 @@ class Sgt():
     def __init__(self, 
                  alphabets=[], 
                  kappa=1, 
-                 lengthsensitive=True, 
+                 lengthsensitive=False, 
                  flatten=True,
                  mode='default', 
                  processors=None,
