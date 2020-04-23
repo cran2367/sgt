@@ -1,68 +1,132 @@
+# Sequence Graph Transform (SGT) &mdash; Sequence Embedding for Clustering, Classification, and Search
 
-<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=default"></script>
-
-# Sequence Graph Transform (SGT)
-
-#### Maintained by: Chitta Ranjan (nk.chitta.ranjan@gmail.com)
-
-
-This is open source code repository for SGT. Sequence Graph Transform extracts the short- and long-term sequence features and embeds them in a finite-dimensional feature space. Importantly, SGT has low computation and can extract any amount of short- to long-term patterns without any increase in the computation. These properties are proved theoretically and demonstrated on real data in this paper: https://arxiv.org/abs/1608.03533.
-
-If using this code or dataset, please cite the following:
-
-[1] Ranjan, Chitta, Samaneh Ebrahimi, and Kamran Paynabar. "Sequence Graph Transform (SGT): A Feature Extraction Function for Sequence Data Mining." arXiv preprint arXiv:1608.03533 (2016).
-
-@article{ranjan2016sequence,
-  title={Sequence Graph Transform (SGT): A Feature Extraction Function for Sequence Data Mining},
-  author={Ranjan, Chitta and Ebrahimi, Samaneh and Paynabar, Kamran},
-  journal={arXiv preprint arXiv:1608.03533},
-  year={2016}
-}
+#### Maintained by: Chitta Ranjan 
+Email: <cran2367@gmail.com>
+| LinkedIn: [https://www.linkedin.com/in/chitta-ranjan-b0851911/](https://www.linkedin.com/in/chitta-ranjan-b0851911/)
 
 
-## Sequence Mining with Python
+The following will cover,
 
-### Install `sgt`
-You can install `sgt` directly using a pip command.
+1. [SGT Class Definition](#sgt-class-def)
+2. [Installation](#install-sgt)
+3. [Test Examples](#installation-test-examples)
+4. [Sequence Clustering Example](#sequence-clustering)
+5. [Sequence Classification Example](#sequence-classification)
+6. [Sequence Search Example](#sequence-search)
+7. [SGT - Spark for Distributed Computing](#sgt-spark)
+8. [Datasets](#datasets)
+
+
+## <a name="sgt-class-def"></a> SGT Class Definition
+
+Sequence Graph Transform (SGT) is a sequence embedding function. SGT extracts the short- and long-term sequence features and embeds them in a finite-dimensional feature space. The long and short term patterns embedded in SGT can be tuned without any increase in the computation."
+
+
+```
+class SGT():
+    '''
+    Compute embedding of a single or a collection of discrete item 
+    sequences. A discrete item sequence is a sequence made from a set
+    discrete elements, also known as alphabet set. For example,
+    suppose the alphabet set is the set of roman letters, 
+    {A, B, ..., Z}. This set is made of discrete elements. Examples of
+    sequences from such a set are AABADDSA, UADSFJPFFFOIHOUGD, etc.
+    Such sequence datasets are commonly found in online industry,
+    for example, item purchase history, where the alphabet set is
+    the set of all product items. Sequence datasets are abundant in
+    bioinformatics as protein sequences.
+    Using the embeddings created here, classification and clustering
+    models can be built for sequence datasets.
+    Read more in https://arxiv.org/pdf/1608.03533.pdf
+    '''
+
+    Parameters
+    ----------
+    Input:
+
+    alphabets       Optional, except if mode is Spark. 
+                    The set of alphabets that make up all 
+                    the sequences in the dataset. If not passed, the
+                    alphabet set is automatically computed as the 
+                    unique set of elements that make all the sequences.
+                    A list or 1d-array of the set of elements that make up the      
+                    sequences. For example, np.array(["A", "B", "C"].
+                    If mode is 'spark', the alphabets are necessary.
+
+    kappa           Tuning parameter, kappa > 0, to change the extraction of 
+                    long-term dependency. Higher the value the lesser
+                    the long-term dependency captured in the embedding.
+                    Typical values for kappa are 1, 5, 10.
+
+    lengthsensitive Default false. This is set to true if the embedding of
+                    should have the information of the length of the sequence.
+                    If set to false then the embedding of two sequences with
+                    similar pattern but different lengths will be the same.
+                    lengthsensitive = false is similar to length-normalization.
+                    
+    flatten         Default True. If True the SGT embedding is flattened and returned as
+                    a vector. Otherwise, it is returned as a matrix with the row and col
+                    names same as the alphabets. The matrix form is used for            
+                    interpretation purposes. Especially, to understand how the alphabets
+                    are "related". Otherwise, for applying machine learning or deep
+                    learning algorithms, the embedding vectors are required.
+    
+    mode            Choices in {'default', 'multiprocessing'}. Note: 'multiprocessing' 
+                    mode requires pandas==1.0.3+ and pandarallel libraries.
+    
+    processors      Used if mode is 'multiprocessing'. By default, the 
+                    number of processors used in multiprocessing is
+                    number of available - 1.
+    '''
+
+    
+    Attributes
+    ----------
+    def fit(sequence)
+    
+    Extract Sequence Graph Transform features using Algorithm-2 in https://arxiv.org/abs/1608.03533.
+    Input:
+    sequence        An array of discrete elements. For example,
+                    np.array(["B","B","A","C","A","C","A","A","B","A"].
+                    
+    Output: 
+    sgt embedding   sgt matrix or vector (depending on Flatten==False or True) of the sequence
+    
+    
+    --
+    def fit_transform(corpus)
+    
+    Extract SGT embeddings for all sequences in a corpus. It finds
+    the alphabets encompassing all the sequences in the corpus, if not inputted. 
+    However, if the mode is 'spark', then the alphabets list has to be
+    explicitly given in Sgt object declaration.
+    
+    Input:
+    corpus          A list of sequences. Each sequence is a list of alphabets.
+    
+    Output:
+    sgt embedding of all sequences in the corpus.
+    
+    
+    --
+    def transform(corpus)
+    
+    Find SGT embeddings of a new data sample belonging to the same population
+    of the corpus that was fitted initially.
+```
+
+## <a name="install-sgt"></a> Install SGT
+
+Install SGT in Python by running,
 
 ```$ pip install sgt```
 
-### Testing
 
 ```python
-import numpy as np
-import pandas as pd
-from itertools import chain
-import warnings
+import sgt
+sgt.__version__
+from sgt import SGT
 
-########
-from sklearn.preprocessing import LabelEncoder
-import tensorflow as tf
-from keras.datasets import imdb
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.layers import LSTM
-from tensorflow.keras.layers import Dropout, Activation, Flatten
-from tensorflow.keras.layers import Embedding
-from tensorflow.keras.preprocessing import sequence
-np.random.seed(7) # fix random seed for reproducibility
-from sklearn.model_selection import train_test_split, KFold, StratifiedKFold
-import sklearn.metrics
-import time
-
-from sklearn.decomposition import PCA
-from sklearn.cluster import KMeans
-
-import matplotlib.pyplot as plt
-%matplotlib inline
-
-from sgt import Sgt
-```
-
-
-```python
-
-tf.__version__
 ```
 
 
@@ -72,57 +136,37 @@ tf.__version__
 
 
 
-#### Test Examples
 
 
 ```python
-sgt = Sgt()
+# -*- coding: utf-8 -*-
+# Authors: Chitta Ranjan <cran2367@gmail.com>
+#
+# License: BSD 3 clause
 ```
 
 
+## <a name="installation-test-examples"></a> Installation Test Examples
+
+In the following, there are a few test examples to verify the installation.
+
+
 ```python
+# Learning a sgt embedding as a matrix with 
+# rows and columns as the sequence alphabets. 
+# This embedding shows the relationship between 
+# the alphabets. The higher the value the 
+# stronger the relationship.
+
+sgt = SGT(flatten=False)
 sequence = np.array(["B","B","A","C","A","C","A","A","B","A"])
-alphabets = ["A", "B", "C"]
-lengthsensitive = True
-kappa = 5
-```
-
-
-```python
-sgt.getpositions(sequence = sequence, alphabets = alphabets)
-```
-
-
-
-
-    [('A', (array([2, 4, 6, 7, 9]),)),
-     ('B', (array([0, 1, 8]),)),
-     ('C', (array([3, 5]),))]
-
-
-
-
-```python
-sgt.fit(sequence, alphabets, lengthsensitive, kappa, flatten=False)
+sgt.fit(sequence)
 ```
 
 
 
 
 <div>
-<style>
-    .dataframe thead tr:only-child th {
-        text-align: right;
-    }
-
-    .dataframe thead th {
-        text-align: left;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -135,21 +179,21 @@ sgt.fit(sequence, alphabets, lengthsensitive, kappa, flatten=False)
   <tbody>
     <tr>
       <th>A</th>
-      <td>0.369361</td>
-      <td>0.442463</td>
-      <td>0.537637</td>
+      <td>0.090616</td>
+      <td>0.131002</td>
+      <td>0.261849</td>
     </tr>
     <tr>
       <th>B</th>
-      <td>0.414884</td>
-      <td>0.468038</td>
-      <td>0.162774</td>
+      <td>0.086569</td>
+      <td>0.123042</td>
+      <td>0.052544</td>
     </tr>
     <tr>
       <th>C</th>
-      <td>0.454136</td>
-      <td>0.068693</td>
-      <td>0.214492</td>
+      <td>0.137142</td>
+      <td>0.028263</td>
+      <td>0.135335</td>
     </tr>
   </tbody>
 </table>
@@ -159,158 +203,1108 @@ sgt.fit(sequence, alphabets, lengthsensitive, kappa, flatten=False)
 
 
 ```python
-corpus = [["B","B","A","C","A","C","A","A","B","A"], ["C", "Z", "Z", "Z", "D"]]
-```
+# SGT embedding to a vector. The vector
+# embedding is useful for directly applying
+# a machine learning algorithm.
 
-
-```python
-s = sgt.fit_transform(corpus)
-print(s)
-```
-
-    [[0.90616284 1.31002279 2.6184865  0.         0.         0.86569371
-      1.23042262 0.52543984 0.         0.         1.37141609 0.28262508
-      1.35335283 0.         0.         0.         0.         0.
-      0.         0.         0.         0.         0.         0.
-      0.        ]
-     [0.         0.         0.         0.         0.         0.
-      0.         0.         0.         0.         0.         0.
-      0.         0.09157819 0.92166965 0.         0.         0.
-      0.         0.         0.         0.         0.         0.92166965
-      1.45182361]]
-
-
-
-```python
-sequence_test = [['a', 'b'], ['a', 'b', 'c'], ['e', 'f']]
-```
-
-
-```python
-sequence_model_test = Sgt(kappa=10, lengthsensitive=True)
-```
-
-
-```python
-result_test = sequence_model_test.fit_transform(corpus=sequence_test)
-```
-
-
-```python
-result_test
+sgt = SGT(flatten=True)
+sequence = np.array(["B","B","A","C","A","C","A","A","B","A"])
+sgt.fit(sequence)
 ```
 
 
 
 
-    array([[0.        , 0.39428342, 0.        , 0.        , 0.        ,
-            0.        , 0.        , 0.        , 0.        , 0.        ,
-            0.        , 0.        , 0.        , 0.        , 0.        ,
-            0.        , 0.        , 0.        , 0.        , 0.        ,
-            0.        , 0.        , 0.        , 0.        , 0.        ],
-           [0.        , 0.41059877, 0.15105085, 0.        , 0.        ,
-            0.        , 0.        , 0.41059877, 0.        , 0.        ,
-            0.        , 0.        , 0.        , 0.        , 0.        ,
-            0.        , 0.        , 0.        , 0.        , 0.        ,
-            0.        , 0.        , 0.        , 0.        , 0.        ],
-           [0.        , 0.        , 0.        , 0.        , 0.        ,
-            0.        , 0.        , 0.        , 0.        , 0.        ,
-            0.        , 0.        , 0.        , 0.        , 0.        ,
-            0.        , 0.        , 0.        , 0.        , 0.39428342,
-            0.        , 0.        , 0.        , 0.        , 0.        ]])
+    (A, A)    0.090616
+    (A, B)    0.131002
+    (A, C)    0.261849
+    (B, A)    0.086569
+    (B, B)    0.123042
+    (B, C)    0.052544
+    (C, A)    0.137142
+    (C, B)    0.028263
+    (C, C)    0.135335
+    dtype: float64
 
 
 
 
 ```python
-sequence_model_test.alphabets
+'''
+SGT embedding on a corpus of sequences.
+Test the two processing modes within the
+SGT class: 'default', 'multiprocessing'.
+
+'''
+
+# A sample corpus of two sequences.
+corpus = pd.DataFrame([[1, ["B","B","A","C","A","C","A","A","B","A"]], 
+                       [2, ["C", "Z", "Z", "Z", "D"]]], 
+                      columns=['id', 'sequence'])
+corpus
 ```
 
 
 
 
-    ['a', 'b', 'c', 'e', 'f']
+<div>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>id</th>
+      <th>sequence</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1</td>
+      <td>[B, B, A, C, A, C, A, A, B, A]</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2</td>
+      <td>[C, Z, Z, Z, D]</td>
+    </tr>
+  </tbody>
+</table>
+</div>
 
 
-
-## Protein Sequence Data Analysis
-
-The data used here is taken from www.uniprot.org. This is a public database for proteins. The data contains the protein sequences and their functions. In the following, we will demonstrate 
-- clustering of the sequences.
-- classification of the sequences with the functions as labels.
 
 
 ```python
-protein_data=pd.DataFrame.from_csv('../data/protein_classification.csv')
-X=protein_data['Sequence']
-def split(word): 
-    return [char for char in word] 
-
-sequences = [split(x) for x in X]
-print(sequences[0])
+# Learning the sgt embeddings as vector for
+# all sequences in a corpus.
+# mode: 'default'
+sgt = SGT(kappa=1, 
+          flatten=True, 
+          lengthsensitive=False, 
+          mode='default')
+sgt.fit_transform(corpus)
 ```
 
-    ['M', 'E', 'I', 'E', 'K', 'T', 'N', 'R', 'M', 'N', 'A', 'L', 'F', 'E', 'F', 'Y', 'A', 'A', 'L', 'L', 'T', 'D', 'K', 'Q', 'M', 'N', 'Y', 'I', 'E', 'L', 'Y', 'Y', 'A', 'D', 'D', 'Y', 'S', 'L', 'A', 'E', 'I', 'A', 'E', 'E', 'F', 'G', 'V', 'S', 'R', 'Q', 'A', 'V', 'Y', 'D', 'N', 'I', 'K', 'R', 'T', 'E', 'K', 'I', 'L', 'E', 'D', 'Y', 'E', 'M', 'K', 'L', 'H', 'M', 'Y', 'S', 'D', 'Y', 'I', 'V', 'R', 'S', 'Q', 'I', 'F', 'D', 'Q', 'I', 'L', 'E', 'R', 'Y', 'P', 'K', 'D', 'D', 'F', 'L', 'Q', 'E', 'Q', 'I', 'E', 'I', 'L', 'T', 'S', 'I', 'D', 'N', 'R', 'E']
 
 
-### Generating sequence embeddings
+
+<div>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>id</th>
+      <th>(A, A)</th>
+      <th>(A, B)</th>
+      <th>(A, C)</th>
+      <th>(A, D)</th>
+      <th>(A, Z)</th>
+      <th>(B, A)</th>
+      <th>(B, B)</th>
+      <th>(B, C)</th>
+      <th>(B, D)</th>
+      <th>...</th>
+      <th>(D, A)</th>
+      <th>(D, B)</th>
+      <th>(D, C)</th>
+      <th>(D, D)</th>
+      <th>(D, Z)</th>
+      <th>(Z, A)</th>
+      <th>(Z, B)</th>
+      <th>(Z, C)</th>
+      <th>(Z, D)</th>
+      <th>(Z, Z)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1.0</td>
+      <td>0.090616</td>
+      <td>0.131002</td>
+      <td>0.261849</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.086569</td>
+      <td>0.123042</td>
+      <td>0.052544</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2.0</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.184334</td>
+      <td>0.290365</td>
+    </tr>
+  </tbody>
+</table>
+<p>2 rows × 26 columns</p>
+</div>
+
+
 
 
 ```python
-sgt = Sgt(kappa = 1, lengthsensitive = False)
+# Learning the sgt embeddings as vector for
+# all sequences in a corpus.
+# mode: 'multiprocessing'
+
+import pandarallel  # required library for multiprocessing
+
+sgt = SGT(kappa=1, 
+          flatten=True, 
+          lengthsensitive=False,
+          mode='multiprocessing')
+
+sgt.fit_transform(corpus)
 ```
 
-
-```python
-embedding = sgt.fit_transform(corpus=sequences)
-```
-
-
-```python
-embedding.shape
-```
-
-
-
-
-    (2112, 400)
-
-
-
-#### Sequence Clustering
-We perform PCA on the sequence embeddings and then do kmeans clustering.
-
-
-```python
-pca = PCA(n_components=2)
-pca.fit(embedding)
-X=pca.transform(embedding)
-
-print(np.sum(pca.explained_variance_ratio_))
-df = pd.DataFrame(data=X, columns=['x1', 'x2'])
-df.head()
-```
-
-    0.6432744907364925
+    INFO: Pandarallel will run on 7 workers.
+    INFO: Pandarallel will use standard multiprocessing data transfer (pipe) to transfer data between the main process and workers.
 
 
 
 
 
 <div>
-<style>
-    .dataframe thead tr:only-child th {
-        text-align: right;
-    }
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>id</th>
+      <th>(A, A)</th>
+      <th>(A, B)</th>
+      <th>(A, C)</th>
+      <th>(A, D)</th>
+      <th>(A, Z)</th>
+      <th>(B, A)</th>
+      <th>(B, B)</th>
+      <th>(B, C)</th>
+      <th>(B, D)</th>
+      <th>...</th>
+      <th>(D, A)</th>
+      <th>(D, B)</th>
+      <th>(D, C)</th>
+      <th>(D, D)</th>
+      <th>(D, Z)</th>
+      <th>(Z, A)</th>
+      <th>(Z, B)</th>
+      <th>(Z, C)</th>
+      <th>(Z, D)</th>
+      <th>(Z, Z)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1.0</td>
+      <td>0.090616</td>
+      <td>0.131002</td>
+      <td>0.261849</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.086569</td>
+      <td>0.123042</td>
+      <td>0.052544</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2.0</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.184334</td>
+      <td>0.290365</td>
+    </tr>
+  </tbody>
+</table>
+<p>2 rows × 26 columns</p>
+</div>
 
-    .dataframe thead th {
-        text-align: left;
-    }
+## Load Libraries for Illustrative Examples
 
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-</style>
+
+```python
+from sgt import SGT
+
+import numpy as np
+import pandas as pd
+from itertools import chain
+from itertools import product as iterproduct
+import warnings
+
+import pickle
+
+########
+from sklearn.preprocessing import LabelEncoder
+import tensorflow as tf
+from keras.datasets import imdb
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import LSTM
+from tensorflow.keras.layers import Dropout
+from tensorflow.keras.layers import Activation
+from tensorflow.keras.layers import Flatten
+from tensorflow.keras.layers import Embedding
+from tensorflow.keras.preprocessing import sequence
+
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import KFold
+from sklearn.model_selection import StratifiedKFold
+import sklearn.metrics
+import time
+
+from sklearn.decomposition import PCA
+from sklearn.cluster import KMeans
+
+import matplotlib.pyplot as plt
+%matplotlib inline
+
+np.random.seed(7) # fix random seed for reproducibility
+
+# from sgt import Sgt
+```
+
+
+## <a name="sequence-clustering"></a> Sequence Clustering
+
+A form of unsupervised learning from sequences is clustering. For example, in 
+
+- user weblogs sequences: clustering the weblogs segments users into groups with similar browsing behavior. This helps in targeted marketing, anomaly detection, and other web customizations.
+
+- protein sequences: clustering proteins with similar structures help researchers study the commonalities between species. It also helps in faster search in some search algorithms.
+
+In the following, clustering on a protein sequence dataset will be shown.
+
+
+
+### Protein Sequence Clustering
+
+The data used here is taken from www.uniprot.org. This is a public database for proteins. The data contains the protein sequences and their functions.
+
+
+```python
+# Loading data
+corpus = pd.read_csv('data/protein_classification.csv')
+
+# Data preprocessing
+corpus = corpus.loc[:,['Entry','Sequence']]
+corpus.columns = ['id', 'sequence']
+corpus['sequence'] = corpus['sequence'].map(list)
+corpus
+```
+
+
+
+
+<div>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>id</th>
+      <th>sequence</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>M7MCX3</td>
+      <td>[M, E, I, E, K, T, N, R, M, N, A, L, F, E, F, ...</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>K6PL84</td>
+      <td>[M, E, I, E, K, N, Y, R, M, N, S, L, F, E, F, ...</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>R4W5V3</td>
+      <td>[M, E, I, E, K, T, N, R, M, N, A, L, F, E, F, ...</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>T2A126</td>
+      <td>[M, E, I, E, K, T, N, R, M, N, A, L, F, E, F, ...</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>L0SHD5</td>
+      <td>[M, E, I, E, K, T, N, R, M, N, A, L, F, E, F, ...</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>2107</th>
+      <td>A0A081R612</td>
+      <td>[M, M, N, M, Q, N, M, M, R, Q, A, Q, K, L, Q, ...</td>
+    </tr>
+    <tr>
+      <th>2108</th>
+      <td>A0A081QQM2</td>
+      <td>[M, M, N, M, Q, N, M, M, R, Q, A, Q, K, L, Q, ...</td>
+    </tr>
+    <tr>
+      <th>2109</th>
+      <td>J1A517</td>
+      <td>[M, M, R, Q, A, Q, K, L, Q, K, Q, M, E, Q, S, ...</td>
+    </tr>
+    <tr>
+      <th>2110</th>
+      <td>F5U1T6</td>
+      <td>[M, M, N, M, Q, S, M, M, K, Q, A, Q, K, L, Q, ...</td>
+    </tr>
+    <tr>
+      <th>2111</th>
+      <td>J3A2T7</td>
+      <td>[M, M, N, M, Q, N, M, M, K, Q, A, Q, K, L, Q, ...</td>
+    </tr>
+  </tbody>
+</table>
+<p>2112 rows × 2 columns</p>
+</div>
+
+
+
+
+```python
+%%time
+# Compute SGT embeddings
+sgt_ = SGT(kappa=1, 
+           lengthsensitive=False, 
+           mode='multiprocessing')
+sgtembedding_df = sgt_.fit_transform(corpus)
+```
+
+    INFO: Pandarallel will run on 7 workers.
+    INFO: Pandarallel will use standard multiprocessing data transfer (pipe) to transfer data between the main process and workers.
+    CPU times: user 324 ms, sys: 68 ms, total: 392 ms
+    Wall time: 9.02 s
+
+
+
+```python
+sgtembedding_df
+```
+
+
+
+
+<div>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>id</th>
+      <th>(A, A)</th>
+      <th>(A, C)</th>
+      <th>(A, D)</th>
+      <th>(A, E)</th>
+      <th>(A, F)</th>
+      <th>(A, G)</th>
+      <th>(A, H)</th>
+      <th>(A, I)</th>
+      <th>(A, K)</th>
+      <th>...</th>
+      <th>(Y, M)</th>
+      <th>(Y, N)</th>
+      <th>(Y, P)</th>
+      <th>(Y, Q)</th>
+      <th>(Y, R)</th>
+      <th>(Y, S)</th>
+      <th>(Y, T)</th>
+      <th>(Y, V)</th>
+      <th>(Y, W)</th>
+      <th>(Y, Y)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>M7MCX3</td>
+      <td>0.020180</td>
+      <td>0.0</td>
+      <td>0.009635</td>
+      <td>0.013529</td>
+      <td>0.009360</td>
+      <td>0.003205</td>
+      <td>2.944887e-10</td>
+      <td>0.002226</td>
+      <td>0.000379</td>
+      <td>...</td>
+      <td>0.009196</td>
+      <td>0.007964</td>
+      <td>0.036788</td>
+      <td>0.000195</td>
+      <td>0.001513</td>
+      <td>0.020665</td>
+      <td>0.000542</td>
+      <td>0.007479</td>
+      <td>0.0</td>
+      <td>0.010419</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>K6PL84</td>
+      <td>0.001604</td>
+      <td>0.0</td>
+      <td>0.012637</td>
+      <td>0.006323</td>
+      <td>0.006224</td>
+      <td>0.004819</td>
+      <td>3.560677e-03</td>
+      <td>0.001124</td>
+      <td>0.012136</td>
+      <td>...</td>
+      <td>0.135335</td>
+      <td>0.006568</td>
+      <td>0.038901</td>
+      <td>0.011298</td>
+      <td>0.012578</td>
+      <td>0.009913</td>
+      <td>0.001079</td>
+      <td>0.000023</td>
+      <td>0.0</td>
+      <td>0.007728</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>R4W5V3</td>
+      <td>0.012448</td>
+      <td>0.0</td>
+      <td>0.008408</td>
+      <td>0.016363</td>
+      <td>0.027469</td>
+      <td>0.003205</td>
+      <td>2.944887e-10</td>
+      <td>0.004249</td>
+      <td>0.013013</td>
+      <td>...</td>
+      <td>0.008114</td>
+      <td>0.007128</td>
+      <td>0.000000</td>
+      <td>0.000203</td>
+      <td>0.001757</td>
+      <td>0.022736</td>
+      <td>0.000249</td>
+      <td>0.012652</td>
+      <td>0.0</td>
+      <td>0.008533</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>T2A126</td>
+      <td>0.010545</td>
+      <td>0.0</td>
+      <td>0.012560</td>
+      <td>0.014212</td>
+      <td>0.013728</td>
+      <td>0.000000</td>
+      <td>2.944887e-10</td>
+      <td>0.007223</td>
+      <td>0.000309</td>
+      <td>...</td>
+      <td>0.000325</td>
+      <td>0.009669</td>
+      <td>0.000000</td>
+      <td>0.003182</td>
+      <td>0.001904</td>
+      <td>0.015607</td>
+      <td>0.000577</td>
+      <td>0.007479</td>
+      <td>0.0</td>
+      <td>0.008648</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>L0SHD5</td>
+      <td>0.020180</td>
+      <td>0.0</td>
+      <td>0.008628</td>
+      <td>0.015033</td>
+      <td>0.009360</td>
+      <td>0.003205</td>
+      <td>2.944887e-10</td>
+      <td>0.002226</td>
+      <td>0.000379</td>
+      <td>...</td>
+      <td>0.009196</td>
+      <td>0.007964</td>
+      <td>0.036788</td>
+      <td>0.000195</td>
+      <td>0.001513</td>
+      <td>0.020665</td>
+      <td>0.000542</td>
+      <td>0.007479</td>
+      <td>0.0</td>
+      <td>0.010419</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>2107</th>
+      <td>A0A081R612</td>
+      <td>0.014805</td>
+      <td>0.0</td>
+      <td>0.004159</td>
+      <td>0.017541</td>
+      <td>0.012701</td>
+      <td>0.013099</td>
+      <td>0.000000e+00</td>
+      <td>0.017043</td>
+      <td>0.004732</td>
+      <td>...</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>2108</th>
+      <td>A0A081QQM2</td>
+      <td>0.010774</td>
+      <td>0.0</td>
+      <td>0.004283</td>
+      <td>0.014732</td>
+      <td>0.014340</td>
+      <td>0.014846</td>
+      <td>0.000000e+00</td>
+      <td>0.016806</td>
+      <td>0.005406</td>
+      <td>...</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>2109</th>
+      <td>J1A517</td>
+      <td>0.010774</td>
+      <td>0.0</td>
+      <td>0.004283</td>
+      <td>0.014732</td>
+      <td>0.014340</td>
+      <td>0.014846</td>
+      <td>0.000000e+00</td>
+      <td>0.014500</td>
+      <td>0.005406</td>
+      <td>...</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>2110</th>
+      <td>F5U1T6</td>
+      <td>0.015209</td>
+      <td>0.0</td>
+      <td>0.005175</td>
+      <td>0.023888</td>
+      <td>0.011410</td>
+      <td>0.011510</td>
+      <td>0.000000e+00</td>
+      <td>0.021145</td>
+      <td>0.009280</td>
+      <td>...</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>2111</th>
+      <td>J3A2T7</td>
+      <td>0.005240</td>
+      <td>0.0</td>
+      <td>0.012301</td>
+      <td>0.013178</td>
+      <td>0.014744</td>
+      <td>0.014705</td>
+      <td>0.000000e+00</td>
+      <td>0.000981</td>
+      <td>0.007957</td>
+      <td>...</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+    </tr>
+  </tbody>
+</table>
+<p>2112 rows × 401 columns</p>
+</div>
+
+
+
+
+```python
+# Set the id column as the dataframe index
+sgtembedding_df = sgtembedding_df.set_index('id')
+sgtembedding_df
+```
+
+
+
+
+<div>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>(A, A)</th>
+      <th>(A, C)</th>
+      <th>(A, D)</th>
+      <th>(A, E)</th>
+      <th>(A, F)</th>
+      <th>(A, G)</th>
+      <th>(A, H)</th>
+      <th>(A, I)</th>
+      <th>(A, K)</th>
+      <th>(A, L)</th>
+      <th>...</th>
+      <th>(Y, M)</th>
+      <th>(Y, N)</th>
+      <th>(Y, P)</th>
+      <th>(Y, Q)</th>
+      <th>(Y, R)</th>
+      <th>(Y, S)</th>
+      <th>(Y, T)</th>
+      <th>(Y, V)</th>
+      <th>(Y, W)</th>
+      <th>(Y, Y)</th>
+    </tr>
+    <tr>
+      <th>id</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>M7MCX3</th>
+      <td>0.020180</td>
+      <td>0.0</td>
+      <td>0.009635</td>
+      <td>0.013529</td>
+      <td>0.009360</td>
+      <td>0.003205</td>
+      <td>2.944887e-10</td>
+      <td>0.002226</td>
+      <td>0.000379</td>
+      <td>0.021703</td>
+      <td>...</td>
+      <td>0.009196</td>
+      <td>0.007964</td>
+      <td>0.036788</td>
+      <td>0.000195</td>
+      <td>0.001513</td>
+      <td>0.020665</td>
+      <td>0.000542</td>
+      <td>0.007479</td>
+      <td>0.0</td>
+      <td>0.010419</td>
+    </tr>
+    <tr>
+      <th>K6PL84</th>
+      <td>0.001604</td>
+      <td>0.0</td>
+      <td>0.012637</td>
+      <td>0.006323</td>
+      <td>0.006224</td>
+      <td>0.004819</td>
+      <td>3.560677e-03</td>
+      <td>0.001124</td>
+      <td>0.012136</td>
+      <td>0.018427</td>
+      <td>...</td>
+      <td>0.135335</td>
+      <td>0.006568</td>
+      <td>0.038901</td>
+      <td>0.011298</td>
+      <td>0.012578</td>
+      <td>0.009913</td>
+      <td>0.001079</td>
+      <td>0.000023</td>
+      <td>0.0</td>
+      <td>0.007728</td>
+    </tr>
+    <tr>
+      <th>R4W5V3</th>
+      <td>0.012448</td>
+      <td>0.0</td>
+      <td>0.008408</td>
+      <td>0.016363</td>
+      <td>0.027469</td>
+      <td>0.003205</td>
+      <td>2.944887e-10</td>
+      <td>0.004249</td>
+      <td>0.013013</td>
+      <td>0.031118</td>
+      <td>...</td>
+      <td>0.008114</td>
+      <td>0.007128</td>
+      <td>0.000000</td>
+      <td>0.000203</td>
+      <td>0.001757</td>
+      <td>0.022736</td>
+      <td>0.000249</td>
+      <td>0.012652</td>
+      <td>0.0</td>
+      <td>0.008533</td>
+    </tr>
+    <tr>
+      <th>T2A126</th>
+      <td>0.010545</td>
+      <td>0.0</td>
+      <td>0.012560</td>
+      <td>0.014212</td>
+      <td>0.013728</td>
+      <td>0.000000</td>
+      <td>2.944887e-10</td>
+      <td>0.007223</td>
+      <td>0.000309</td>
+      <td>0.028531</td>
+      <td>...</td>
+      <td>0.000325</td>
+      <td>0.009669</td>
+      <td>0.000000</td>
+      <td>0.003182</td>
+      <td>0.001904</td>
+      <td>0.015607</td>
+      <td>0.000577</td>
+      <td>0.007479</td>
+      <td>0.0</td>
+      <td>0.008648</td>
+    </tr>
+    <tr>
+      <th>L0SHD5</th>
+      <td>0.020180</td>
+      <td>0.0</td>
+      <td>0.008628</td>
+      <td>0.015033</td>
+      <td>0.009360</td>
+      <td>0.003205</td>
+      <td>2.944887e-10</td>
+      <td>0.002226</td>
+      <td>0.000379</td>
+      <td>0.021703</td>
+      <td>...</td>
+      <td>0.009196</td>
+      <td>0.007964</td>
+      <td>0.036788</td>
+      <td>0.000195</td>
+      <td>0.001513</td>
+      <td>0.020665</td>
+      <td>0.000542</td>
+      <td>0.007479</td>
+      <td>0.0</td>
+      <td>0.010419</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>A0A081R612</th>
+      <td>0.014805</td>
+      <td>0.0</td>
+      <td>0.004159</td>
+      <td>0.017541</td>
+      <td>0.012701</td>
+      <td>0.013099</td>
+      <td>0.000000e+00</td>
+      <td>0.017043</td>
+      <td>0.004732</td>
+      <td>0.014904</td>
+      <td>...</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>A0A081QQM2</th>
+      <td>0.010774</td>
+      <td>0.0</td>
+      <td>0.004283</td>
+      <td>0.014732</td>
+      <td>0.014340</td>
+      <td>0.014846</td>
+      <td>0.000000e+00</td>
+      <td>0.016806</td>
+      <td>0.005406</td>
+      <td>0.014083</td>
+      <td>...</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>J1A517</th>
+      <td>0.010774</td>
+      <td>0.0</td>
+      <td>0.004283</td>
+      <td>0.014732</td>
+      <td>0.014340</td>
+      <td>0.014846</td>
+      <td>0.000000e+00</td>
+      <td>0.014500</td>
+      <td>0.005406</td>
+      <td>0.014083</td>
+      <td>...</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>F5U1T6</th>
+      <td>0.015209</td>
+      <td>0.0</td>
+      <td>0.005175</td>
+      <td>0.023888</td>
+      <td>0.011410</td>
+      <td>0.011510</td>
+      <td>0.000000e+00</td>
+      <td>0.021145</td>
+      <td>0.009280</td>
+      <td>0.017466</td>
+      <td>...</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>J3A2T7</th>
+      <td>0.005240</td>
+      <td>0.0</td>
+      <td>0.012301</td>
+      <td>0.013178</td>
+      <td>0.014744</td>
+      <td>0.014705</td>
+      <td>0.000000e+00</td>
+      <td>0.000981</td>
+      <td>0.007957</td>
+      <td>0.017112</td>
+      <td>...</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+    </tr>
+  </tbody>
+</table>
+<p>2112 rows × 400 columns</p>
+</div>
+
+
+
+We perform PCA on the sequence embeddings and then do kmeans clustering.
+
+
+```python
+pca = PCA(n_components=2)
+pca.fit(sgtembedding_df)
+
+X=pca.transform(sgtembedding_df)
+
+print(np.sum(pca.explained_variance_ratio_))
+df = pd.DataFrame(data=X, columns=['x1', 'x2'])
+df.head()
+```
+
+    0.6432744907364981
+
+
+
+
+
+<div>
+
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -368,7 +1362,7 @@ plt.scatter(df['x1'], df['x2'], color=colors, alpha=0.5, edgecolor=colors)
 
 
 
-    <matplotlib.collections.PathCollection at 0x147c494e0>
+    <matplotlib.collections.PathCollection at 0x14c5a77f0>
 
 
 
@@ -376,23 +1370,59 @@ plt.scatter(df['x1'], df['x2'], color=colors, alpha=0.5, edgecolor=colors)
 ![png](output_23_1.png)
 
 
-#### Sequence Classification
-We perform PCA on the sequence embeddings and then do kmeans clustering.
+## <a name="sequence-classification"></a> Sequence Classification using Deep Learning in TensorFlow
+
+The protein data set used above is also labeled. The labels represent the protein functions. Similarly, there are other labeled sequence data sets. For example, DARPA shared an intrusion weblog data set. It contains weblog sequences with positive labels if the log represents a network intrusion.
+
+In such problems supervised learning is employed. Classification is a supervised learning we will demonstrate here.
+
+### Protein Sequence Classification
+
+The data set is taken from https://www.uniprot.org . The protein sequences in the data set have one of the two functions,
+- Binds to DNA and alters its conformation. May be involved in regulation of gene expression, nucleoid organization and DNA protection.
+- Might take part in the signal recognition particle (SRP) pathway. This is inferred from the conservation of its genetic proximity to ftsY/ffh. May be a regulatory protein.
+
+There are a total of 2113 samples. The sequence lengths vary between 80-130.
 
 
 ```python
-y = protein_data['Function [CC]']
+# Loading data
+data = pd.read_csv('data/protein_classification.csv')
+
+
+# Data preprocessing
+y = data['Function [CC]']
 encoder = LabelEncoder()
 encoder.fit(y)
 encoded_y = encoder.transform(y)
+
+corpus = data.loc[:,['Entry','Sequence']]
+corpus.columns = ['id', 'sequence']
+corpus['sequence'] = corpus['sequence'].map(list)
 ```
+
+#### Sequence embeddings
+
+
+```python
+# Sequence embedding
+sgt_ = SGT(kappa=1, 
+           lengthsensitive=False, 
+           mode='multiprocessing')
+sgtembedding_df = sgt_.fit_transform(corpus)
+X = sgtembedding_df.set_index('id')
+```
+
+    INFO: Pandarallel will run on 7 workers.
+    INFO: Pandarallel will use standard multiprocessing data transfer (pipe) to transfer data between the main process and workers.
+
 
 We will perform a 10-fold cross-validation to measure the performance of the classification model.
 
 
 ```python
 kfold = 10
-X = pd.DataFrame(embedding)
+X = X
 y = encoded_y
 
 random_state = 1
@@ -406,8 +1436,6 @@ batch_size = 128
 for train_index, test_index in skf.split(X, y):
     X_train, X_test = X.iloc[train_index], X.iloc[test_index]
     y_train, y_test = y[train_index], y[test_index]
-    X_train = X_train.as_matrix(columns = None)
-    X_test = X_test.as_matrix(columns = None)
     
     model = Sequential()
     model.add(Dense(64, input_shape = (X_train.shape[1],))) 
@@ -434,7 +1462,8 @@ print ('Average f1 score', np.mean(test_F1))
     Average f1 score 1.0
 
 
-## Weblog Sequence Data Analysis
+### Weblog Classification for Intrusion Detection
+
 This data sample is taken from https://www.ll.mit.edu/r-d/datasets/1998-darpa-intrusion-detection-evaluation-dataset. 
 This is a network intrusion data containing audit logs and any attack as a positive label. Since, network intrusion is a rare event, the data is unbalanced. Here we will,
 - build a sequence classification model to predict a network intrusion.
@@ -443,235 +1472,400 @@ Each sequence contains in the data is a series of activity, for example, {login,
 
 
 ```python
-darpa_data = pd.DataFrame.from_csv('../data/darpa_data.csv')
-darpa_data.columns
+# Loading data
+data = pd.read_csv('data/darpa_data.csv')
+data.columns
 ```
 
 
 
 
-    Index(['seqlen', 'seq', 'class'], dtype='object')
+    Index(['timeduration', 'seqlen', 'seq', 'class'], dtype='object')
 
 
 
 
 ```python
-X = darpa_data['seq']
-sequences = [x.split('~') for x in X]
+data['id'] = data.index
 ```
 
 
 ```python
-y = darpa_data['class']
+# Data preprocessing
+y = data['class']
 encoder = LabelEncoder()
 encoder.fit(y)
-y = encoder.transform(y)
+encoded_y = encoder.transform(y)
+
+corpus = data.loc[:,['id','seq']]
+corpus.columns = ['id', 'sequence']
+corpus['sequence'] = corpus['sequence'].map(list)
 ```
 
-### Generating sequence embeddings
-In this data, the sequence embeddings should be length-sensitive. The lengths are important here because sequences with similar patterns but different lengths can have different labels. Consider a simple example of two sessions: `{login, pswd, login, pswd,...}` and `{login, pswd,...(repeated several times)..., login, pswd}`. While the first session can be a regular user mistyping the password once, the other session is possibly an attack to guess the password. Thus, the sequence lengths are as important as the patterns.
+#### Sequence embeddings
+In this data, the sequence embeddings should be **length-sensitive**. 
+
+The lengths are important here because sequences with similar patterns but different lengths can have different labels. Consider a simple example of two sessions: `{login, pswd, login, pswd,...}` and `{login, pswd,...(repeated several times)..., login, pswd}`. 
+
+While the first session can be a regular user mistyping the password once, the other session is possibly an attack to guess the password. Thus, the sequence lengths are as important as the patterns.
+
+Therefore, `lengthsensitive=True` is used here.
 
 
 ```python
-sgt_darpa = Sgt(kappa = 5, lengthsensitive = True)
+# Sequence embedding
+sgt_ = SGT(kappa=5, 
+           lengthsensitive=True, 
+           mode='multiprocessing')
+sgtembedding_df = sgt_.fit_transform(corpus)
+sgtembedding_df = sgtembedding_df.set_index('id')
+sgtembedding_df
 ```
 
+    INFO: Pandarallel will run on 7 workers.
+    INFO: Pandarallel will use standard multiprocessing data transfer (pipe) to transfer data between the main process and workers.
 
-```python
-embedding = sgt_darpa.fit_transform(corpus=sequences)
-```
-
-
-```python
-pd.DataFrame(embedding).to_csv(path_or_buf='tmp.csv', index=False)
-pd.DataFrame(embedding).head()
-```
 
 
 
 
 <div>
-<style>
-    .dataframe thead tr:only-child th {
-        text-align: right;
-    }
-
-    .dataframe thead th {
-        text-align: left;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
       <th></th>
-      <th>0</th>
-      <th>1</th>
-      <th>2</th>
-      <th>3</th>
-      <th>4</th>
-      <th>5</th>
-      <th>6</th>
-      <th>7</th>
-      <th>8</th>
-      <th>9</th>
+      <th>(0, 0)</th>
+      <th>(0, 1)</th>
+      <th>(0, 2)</th>
+      <th>(0, 3)</th>
+      <th>(0, 4)</th>
+      <th>(0, 5)</th>
+      <th>(0, 6)</th>
+      <th>(0, 7)</th>
+      <th>(0, 8)</th>
+      <th>(0, 9)</th>
       <th>...</th>
-      <th>2391</th>
-      <th>2392</th>
-      <th>2393</th>
-      <th>2394</th>
-      <th>2395</th>
-      <th>2396</th>
-      <th>2397</th>
-      <th>2398</th>
-      <th>2399</th>
-      <th>2400</th>
+      <th>(~, 1)</th>
+      <th>(~, 2)</th>
+      <th>(~, 3)</th>
+      <th>(~, 4)</th>
+      <th>(~, 5)</th>
+      <th>(~, 6)</th>
+      <th>(~, 7)</th>
+      <th>(~, 8)</th>
+      <th>(~, 9)</th>
+      <th>(~, ~)</th>
+    </tr>
+    <tr>
+      <th>id</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <th>0</th>
-      <td>0.069114</td>
-      <td>0.0</td>
+      <th>0.0</th>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
       <td>0.000000e+00</td>
       <td>0.000000e+00</td>
-      <td>0.0</td>
       <td>0.000000e+00</td>
       <td>0.000000</td>
       <td>0.000000e+00</td>
       <td>0.000000e+00</td>
       <td>0.000000e+00</td>
       <td>...</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
+      <td>0.485034</td>
+      <td>0.486999</td>
+      <td>0.485802</td>
+      <td>0.483097</td>
+      <td>0.483956</td>
       <td>0.000000</td>
-      <td>0.000000e+00</td>
-      <td>0.0</td>
-      <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.178609</td>
     </tr>
     <tr>
-      <th>1</th>
+      <th>1.0</th>
       <td>0.000000</td>
-      <td>0.0</td>
-      <td>4.804190e-09</td>
-      <td>7.041516e-10</td>
-      <td>0.0</td>
-      <td>2.004958e-12</td>
-      <td>0.000132</td>
-      <td>1.046458e-07</td>
-      <td>5.863092e-16</td>
-      <td>7.568986e-23</td>
+      <td>0.025622</td>
+      <td>0.228156</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>1.310714e-09</td>
+      <td>0.000000</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
       <td>...</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.540296</td>
-      <td>5.739230e-32</td>
-      <td>0.0</td>
-      <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
+      <td>0.447620</td>
+      <td>0.452097</td>
+      <td>0.464568</td>
+      <td>0.367296</td>
+      <td>0.525141</td>
+      <td>0.455018</td>
+      <td>0.374364</td>
+      <td>0.414081</td>
+      <td>0.549981</td>
+      <td>0.172479</td>
     </tr>
     <tr>
-      <th>2</th>
+      <th>2.0</th>
       <td>0.000000</td>
-      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
       <td>0.000000e+00</td>
       <td>0.000000e+00</td>
-      <td>0.0</td>
       <td>0.000000e+00</td>
       <td>0.000000</td>
       <td>0.000000e+00</td>
       <td>0.000000e+00</td>
       <td>0.000000e+00</td>
       <td>...</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
+      <td>0.525605</td>
       <td>0.000000</td>
-      <td>0.000000e+00</td>
-      <td>0.0</td>
-      <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.193359</td>
+      <td>0.071469</td>
     </tr>
     <tr>
-      <th>3</th>
-      <td>0.785666</td>
-      <td>0.0</td>
-      <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
-      <td>0.0</td>
-      <td>0.000000e+00</td>
-      <td>0.000000</td>
-      <td>1.950089e-03</td>
-      <td>2.239981e-04</td>
-      <td>2.343180e-07</td>
+      <th>3.0</th>
+      <td>0.077999</td>
+      <td>0.208974</td>
+      <td>0.230338</td>
+      <td>1.830519e-01</td>
+      <td>1.200926e-17</td>
+      <td>1.696880e-01</td>
+      <td>0.093646</td>
+      <td>7.985870e-02</td>
+      <td>2.896813e-05</td>
+      <td>3.701710e-05</td>
       <td>...</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.528133</td>
-      <td>1.576703e-09</td>
-      <td>0.0</td>
-      <td>2.516644e-29</td>
-      <td>1.484843e-57</td>
+      <td>0.474072</td>
+      <td>0.468353</td>
+      <td>0.463594</td>
+      <td>0.177507</td>
+      <td>0.551270</td>
+      <td>0.418652</td>
+      <td>0.309652</td>
+      <td>0.384657</td>
+      <td>0.378225</td>
+      <td>0.170362</td>
     </tr>
     <tr>
-      <th>4</th>
+      <th>4.0</th>
       <td>0.000000</td>
-      <td>0.0</td>
+      <td>0.023695</td>
+      <td>0.217819</td>
+      <td>2.188276e-33</td>
+      <td>0.000000e+00</td>
+      <td>6.075992e-11</td>
+      <td>0.000000</td>
+      <td>0.000000e+00</td>
+      <td>5.681668e-39</td>
+      <td>0.000000e+00</td>
+      <td>...</td>
+      <td>0.464120</td>
+      <td>0.468229</td>
+      <td>0.452170</td>
+      <td>0.000000</td>
+      <td>0.501242</td>
+      <td>0.000000</td>
+      <td>0.300534</td>
+      <td>0.161961</td>
+      <td>0.000000</td>
+      <td>0.167082</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>106.0</th>
+      <td>0.000000</td>
+      <td>0.024495</td>
+      <td>0.219929</td>
+      <td>2.035190e-17</td>
+      <td>1.073271e-18</td>
+      <td>5.656994e-11</td>
+      <td>0.000000</td>
+      <td>0.000000e+00</td>
+      <td>5.047380e-29</td>
+      <td>0.000000e+00</td>
+      <td>...</td>
+      <td>0.502213</td>
+      <td>0.544343</td>
+      <td>0.477281</td>
+      <td>0.175901</td>
+      <td>0.461103</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.162796</td>
+      <td>0.000000</td>
+      <td>0.167687</td>
+    </tr>
+    <tr>
+      <th>107.0</th>
+      <td>0.110422</td>
+      <td>0.227478</td>
+      <td>0.217549</td>
+      <td>1.723963e-01</td>
+      <td>1.033292e-14</td>
+      <td>3.896725e-07</td>
+      <td>0.083685</td>
+      <td>2.940589e-08</td>
+      <td>8.864072e-02</td>
+      <td>4.813990e-29</td>
+      <td>...</td>
+      <td>0.490398</td>
+      <td>0.522016</td>
+      <td>0.466808</td>
+      <td>0.470603</td>
+      <td>0.479795</td>
+      <td>0.480057</td>
+      <td>0.194888</td>
+      <td>0.172397</td>
+      <td>0.164873</td>
+      <td>0.172271</td>
+    </tr>
+    <tr>
+      <th>108.0</th>
+      <td>0.005646</td>
+      <td>0.202424</td>
+      <td>0.196786</td>
+      <td>2.281242e-01</td>
+      <td>1.133936e-01</td>
+      <td>1.862098e-01</td>
+      <td>0.000000</td>
+      <td>1.212869e-01</td>
+      <td>9.180520e-08</td>
+      <td>0.000000e+00</td>
+      <td>...</td>
+      <td>0.432834</td>
+      <td>0.434953</td>
+      <td>0.439615</td>
+      <td>0.390864</td>
+      <td>0.481764</td>
+      <td>0.600875</td>
+      <td>0.166766</td>
+      <td>0.165368</td>
+      <td>0.000000</td>
+      <td>0.171729</td>
+    </tr>
+    <tr>
+      <th>109.0</th>
+      <td>0.000000</td>
+      <td>0.025616</td>
+      <td>0.238176</td>
+      <td>3.889176e-55</td>
+      <td>1.332427e-60</td>
+      <td>1.408003e-09</td>
+      <td>0.000000</td>
+      <td>9.845377e-60</td>
       <td>0.000000e+00</td>
       <td>0.000000e+00</td>
-      <td>0.0</td>
+      <td>...</td>
+      <td>0.421318</td>
+      <td>0.439985</td>
+      <td>0.467953</td>
+      <td>0.440951</td>
+      <td>0.527165</td>
+      <td>0.864717</td>
+      <td>0.407155</td>
+      <td>0.399335</td>
+      <td>0.251304</td>
+      <td>0.171885</td>
+    </tr>
+    <tr>
+      <th>110.0</th>
+      <td>0.000000</td>
+      <td>0.022868</td>
+      <td>0.203513</td>
+      <td>9.273472e-64</td>
       <td>0.000000e+00</td>
+      <td>1.240870e-09</td>
       <td>0.000000</td>
       <td>0.000000e+00</td>
       <td>0.000000e+00</td>
       <td>0.000000e+00</td>
       <td>...</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
+      <td>0.478090</td>
+      <td>0.454871</td>
+      <td>0.459109</td>
       <td>0.000000</td>
-      <td>0.000000e+00</td>
-      <td>0.0</td>
-      <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
+      <td>0.490534</td>
+      <td>0.370357</td>
+      <td>0.000000</td>
+      <td>0.162997</td>
+      <td>0.000000</td>
+      <td>0.162089</td>
     </tr>
   </tbody>
 </table>
-<p>5 rows × 2401 columns</p>
+<p>111 rows × 121 columns</p>
 </div>
 
 
 
 #### Applying PCA on the embeddings
-The embeddings are sparse. We, therefore, apply PCA on the embeddings.
+The embeddings are sparse and high-dimensional. PCA is, therefore, applied for dimension reduction.
 
 
 ```python
 from sklearn.decomposition import PCA
 pca = PCA(n_components=35)
-pca.fit(embedding)
-X = pca.transform(embedding)
+pca.fit(sgtembedding_df)
+X = pca.transform(sgtembedding_df)
 print(np.sum(pca.explained_variance_ratio_))
 ```
 
-    0.9887812984792304
+    0.9962446146783123
 
 
 #### Building a Multi-Layer Perceptron Classifier
@@ -681,6 +1875,9 @@ The PCA transforms of the embeddings are used directly as inputs to an MLP class
 ```python
 kfold = 3
 random_state = 11
+
+X = X
+y = encoded_y
 
 test_F1 = np.zeros(kfold)
 time_k = np.zeros(kfold)
@@ -716,7 +1913,7 @@ for train_index, test_index in skf.split(X, y):
     k += 1
 ```
 
-    Model: "sequential_12"
+    Model: "sequential_10"
     _________________________________________________________________
     Layer (type)                 Output Shape              Param #   
     =================================================================
@@ -734,1845 +1931,19 @@ for train_index, test_index in skf.split(X, y):
     Trainable params: 4,737
     Non-trainable params: 0
     _________________________________________________________________
-    Train on 73 samples
-    Epoch 1/300
-    73/73 [==============================] - 1s 9ms/sample - loss: 0.1489 - accuracy: 0.4658
-    Epoch 2/300
-    73/73 [==============================] - 0s 138us/sample - loss: 0.1350 - accuracy: 0.5890
-    Epoch 3/300
-    73/73 [==============================] - 0s 138us/sample - loss: 0.1403 - accuracy: 0.5205
-    Epoch 4/300
-    73/73 [==============================] - 0s 142us/sample - loss: 0.1272 - accuracy: 0.6849
-    Epoch 5/300
-    73/73 [==============================] - 0s 126us/sample - loss: 0.1189 - accuracy: 0.7945
-    Epoch 6/300
-    73/73 [==============================] - 0s 131us/sample - loss: 0.1198 - accuracy: 0.7260
-    Epoch 7/300
-    73/73 [==============================] - 0s 155us/sample - loss: 0.1100 - accuracy: 0.8904
-    Epoch 8/300
-    73/73 [==============================] - 0s 130us/sample - loss: 0.1015 - accuracy: 0.8767
-    Epoch 9/300
-    73/73 [==============================] - 0s 146us/sample - loss: 0.0999 - accuracy: 0.8767
-    Epoch 10/300
-    73/73 [==============================] - 0s 130us/sample - loss: 0.1011 - accuracy: 0.8356
-    Epoch 11/300
-    73/73 [==============================] - 0s 130us/sample - loss: 0.0967 - accuracy: 0.9178
-    Epoch 12/300
-    73/73 [==============================] - 0s 140us/sample - loss: 0.0816 - accuracy: 0.9178
-    Epoch 13/300
-    73/73 [==============================] - 0s 151us/sample - loss: 0.0858 - accuracy: 0.9041
-    Epoch 14/300
-    73/73 [==============================] - 0s 132us/sample - loss: 0.0762 - accuracy: 0.8904
-    Epoch 15/300
-    73/73 [==============================] - 0s 134us/sample - loss: 0.0826 - accuracy: 0.8904
-    Epoch 16/300
-    73/73 [==============================] - 0s 136us/sample - loss: 0.0757 - accuracy: 0.9178
-    Epoch 17/300
-    73/73 [==============================] - 0s 137us/sample - loss: 0.0740 - accuracy: 0.9041
-    Epoch 18/300
-    73/73 [==============================] - 0s 132us/sample - loss: 0.0781 - accuracy: 0.9041
-    Epoch 19/300
-    73/73 [==============================] - 0s 137us/sample - loss: 0.0696 - accuracy: 0.9178
-    Epoch 20/300
-    73/73 [==============================] - 0s 145us/sample - loss: 0.0615 - accuracy: 0.9041
-    Epoch 21/300
-    73/73 [==============================] - 0s 131us/sample - loss: 0.0620 - accuracy: 0.9178
-    Epoch 22/300
-    73/73 [==============================] - 0s 152us/sample - loss: 0.0618 - accuracy: 0.9041
-    Epoch 23/300
-    73/73 [==============================] - 0s 143us/sample - loss: 0.0684 - accuracy: 0.9041
-    Epoch 24/300
-    73/73 [==============================] - 0s 132us/sample - loss: 0.0614 - accuracy: 0.9178
-    Epoch 25/300
-    73/73 [==============================] - 0s 138us/sample - loss: 0.0594 - accuracy: 0.9041
-    Epoch 26/300
-    73/73 [==============================] - 0s 151us/sample - loss: 0.0577 - accuracy: 0.9041
-    Epoch 27/300
-    73/73 [==============================] - 0s 130us/sample - loss: 0.0629 - accuracy: 0.9041
-    Epoch 28/300
-    73/73 [==============================] - 0s 137us/sample - loss: 0.0488 - accuracy: 0.9178
-    Epoch 29/300
-    73/73 [==============================] - 0s 143us/sample - loss: 0.0541 - accuracy: 0.9178
-    Epoch 30/300
-    73/73 [==============================] - 0s 142us/sample - loss: 0.0586 - accuracy: 0.9178
-    Epoch 31/300
-    73/73 [==============================] - 0s 152us/sample - loss: 0.0521 - accuracy: 0.9041
-    Epoch 32/300
-    73/73 [==============================] - 0s 136us/sample - loss: 0.0524 - accuracy: 0.9178
-    Epoch 33/300
-    73/73 [==============================] - 0s 138us/sample - loss: 0.0519 - accuracy: 0.9178
-    Epoch 34/300
-    73/73 [==============================] - 0s 143us/sample - loss: 0.0490 - accuracy: 0.9178
-    Epoch 35/300
-    73/73 [==============================] - 0s 139us/sample - loss: 0.0414 - accuracy: 0.9178
-    Epoch 36/300
-    73/73 [==============================] - 0s 155us/sample - loss: 0.0447 - accuracy: 0.9041
-    Epoch 37/300
-    73/73 [==============================] - 0s 152us/sample - loss: 0.0413 - accuracy: 0.9178
-    Epoch 38/300
-    73/73 [==============================] - 0s 154us/sample - loss: 0.0470 - accuracy: 0.9178
-    Epoch 39/300
-    73/73 [==============================] - 0s 161us/sample - loss: 0.0421 - accuracy: 0.9178
-    Epoch 40/300
-    73/73 [==============================] - 0s 152us/sample - loss: 0.0431 - accuracy: 0.9178
-    Epoch 41/300
-    73/73 [==============================] - 0s 133us/sample - loss: 0.0501 - accuracy: 0.9041
-    Epoch 42/300
-    73/73 [==============================] - 0s 130us/sample - loss: 0.0407 - accuracy: 0.9178
-    Epoch 43/300
-    73/73 [==============================] - 0s 149us/sample - loss: 0.0389 - accuracy: 0.9178
-    Epoch 44/300
-    73/73 [==============================] - 0s 143us/sample - loss: 0.0394 - accuracy: 0.9178
-    Epoch 45/300
-    73/73 [==============================] - 0s 138us/sample - loss: 0.0409 - accuracy: 0.9178
-    Epoch 46/300
-    73/73 [==============================] - 0s 150us/sample - loss: 0.0403 - accuracy: 0.9178
-    Epoch 47/300
-    73/73 [==============================] - 0s 149us/sample - loss: 0.0431 - accuracy: 0.9178
-    Epoch 48/300
-    73/73 [==============================] - 0s 158us/sample - loss: 0.0354 - accuracy: 0.9178
-    Epoch 49/300
-    73/73 [==============================] - 0s 170us/sample - loss: 0.0420 - accuracy: 0.9178
-    Epoch 50/300
-    73/73 [==============================] - 0s 142us/sample - loss: 0.0392 - accuracy: 0.9178
-    Epoch 51/300
-    73/73 [==============================] - 0s 167us/sample - loss: 0.0334 - accuracy: 0.9178
-    Epoch 52/300
-    73/73 [==============================] - 0s 165us/sample - loss: 0.0352 - accuracy: 0.9178
-    Epoch 53/300
-    73/73 [==============================] - 0s 129us/sample - loss: 0.0363 - accuracy: 0.9178
-    Epoch 54/300
-    73/73 [==============================] - 0s 150us/sample - loss: 0.0355 - accuracy: 0.9178
-    Epoch 55/300
-    73/73 [==============================] - 0s 141us/sample - loss: 0.0373 - accuracy: 0.9178
-    Epoch 56/300
-    73/73 [==============================] - 0s 129us/sample - loss: 0.0320 - accuracy: 0.9178
-    Epoch 57/300
-    73/73 [==============================] - 0s 135us/sample - loss: 0.0338 - accuracy: 0.9178
-    Epoch 58/300
-    73/73 [==============================] - 0s 140us/sample - loss: 0.0332 - accuracy: 0.9178
-    Epoch 59/300
-    73/73 [==============================] - 0s 132us/sample - loss: 0.0377 - accuracy: 0.9178
-    Epoch 60/300
-    73/73 [==============================] - 0s 134us/sample - loss: 0.0312 - accuracy: 0.9178
-    Epoch 61/300
-    73/73 [==============================] - 0s 137us/sample - loss: 0.0344 - accuracy: 0.9178
-    Epoch 62/300
-    73/73 [==============================] - 0s 129us/sample - loss: 0.0332 - accuracy: 0.9178
-    Epoch 63/300
-    73/73 [==============================] - 0s 135us/sample - loss: 0.0334 - accuracy: 0.9178
-    Epoch 64/300
-    73/73 [==============================] - 0s 145us/sample - loss: 0.0347 - accuracy: 0.9178
-    Epoch 65/300
-    73/73 [==============================] - 0s 130us/sample - loss: 0.0340 - accuracy: 0.9178
-    Epoch 66/300
-    73/73 [==============================] - 0s 135us/sample - loss: 0.0370 - accuracy: 0.9178
-    Epoch 67/300
-    73/73 [==============================] - 0s 144us/sample - loss: 0.0335 - accuracy: 0.9178
-    Epoch 68/300
-    73/73 [==============================] - 0s 138us/sample - loss: 0.0289 - accuracy: 0.9178
-    Epoch 69/300
-    73/73 [==============================] - 0s 124us/sample - loss: 0.0328 - accuracy: 0.9178
-    Epoch 70/300
-    73/73 [==============================] - 0s 141us/sample - loss: 0.0350 - accuracy: 0.9178
-    Epoch 71/300
-    73/73 [==============================] - 0s 142us/sample - loss: 0.0277 - accuracy: 0.9178
-    Epoch 72/300
-    73/73 [==============================] - 0s 135us/sample - loss: 0.0272 - accuracy: 0.9178
-    Epoch 73/300
-    73/73 [==============================] - 0s 131us/sample - loss: 0.0292 - accuracy: 0.9178
-    Epoch 74/300
-    73/73 [==============================] - 0s 146us/sample - loss: 0.0301 - accuracy: 0.9178
-    Epoch 75/300
-    73/73 [==============================] - 0s 141us/sample - loss: 0.0309 - accuracy: 0.9178
-    Epoch 76/300
-    73/73 [==============================] - 0s 140us/sample - loss: 0.0269 - accuracy: 0.9178
-    Epoch 77/300
-    73/73 [==============================] - 0s 143us/sample - loss: 0.0267 - accuracy: 0.9178
-    Epoch 78/300
-    73/73 [==============================] - 0s 138us/sample - loss: 0.0272 - accuracy: 0.9178
-    Epoch 79/300
-    73/73 [==============================] - 0s 139us/sample - loss: 0.0318 - accuracy: 0.9178
-    Epoch 80/300
-    73/73 [==============================] - 0s 138us/sample - loss: 0.0241 - accuracy: 0.9178
-    Epoch 81/300
-    73/73 [==============================] - 0s 139us/sample - loss: 0.0253 - accuracy: 0.9178
-    Epoch 82/300
-    73/73 [==============================] - 0s 129us/sample - loss: 0.0248 - accuracy: 0.9178
-    Epoch 83/300
-    73/73 [==============================] - 0s 138us/sample - loss: 0.0295 - accuracy: 0.9178
-    Epoch 84/300
-    73/73 [==============================] - 0s 127us/sample - loss: 0.0300 - accuracy: 0.9178
-    Epoch 85/300
-    73/73 [==============================] - 0s 126us/sample - loss: 0.0220 - accuracy: 0.9315
-    Epoch 86/300
-    73/73 [==============================] - 0s 131us/sample - loss: 0.0266 - accuracy: 0.9178
-    Epoch 87/300
-    73/73 [==============================] - 0s 128us/sample - loss: 0.0279 - accuracy: 0.9178
-    Epoch 88/300
-    73/73 [==============================] - 0s 130us/sample - loss: 0.0318 - accuracy: 0.9178
-    Epoch 89/300
-    73/73 [==============================] - 0s 133us/sample - loss: 0.0296 - accuracy: 0.9178
-    Epoch 90/300
-    73/73 [==============================] - 0s 128us/sample - loss: 0.0306 - accuracy: 0.9178
-    Epoch 91/300
-    73/73 [==============================] - 0s 138us/sample - loss: 0.0234 - accuracy: 0.9178
-    Epoch 92/300
-    73/73 [==============================] - 0s 146us/sample - loss: 0.0294 - accuracy: 0.9315
-    Epoch 93/300
-    73/73 [==============================] - 0s 125us/sample - loss: 0.0235 - accuracy: 0.9178
-    Epoch 94/300
-    73/73 [==============================] - 0s 148us/sample - loss: 0.0305 - accuracy: 0.9178
-    Epoch 95/300
-    73/73 [==============================] - 0s 142us/sample - loss: 0.0320 - accuracy: 0.9041
-    Epoch 96/300
-    73/73 [==============================] - 0s 124us/sample - loss: 0.0259 - accuracy: 0.9178
-    Epoch 97/300
-    73/73 [==============================] - 0s 131us/sample - loss: 0.0264 - accuracy: 0.9178
-    Epoch 98/300
-    73/73 [==============================] - 0s 146us/sample - loss: 0.0294 - accuracy: 0.9178
-    Epoch 99/300
-    73/73 [==============================] - 0s 133us/sample - loss: 0.0248 - accuracy: 0.9178
-    Epoch 100/300
-    73/73 [==============================] - 0s 128us/sample - loss: 0.0256 - accuracy: 0.9178
-    Epoch 101/300
-    73/73 [==============================] - 0s 152us/sample - loss: 0.0229 - accuracy: 0.9315
-    Epoch 102/300
-    73/73 [==============================] - 0s 130us/sample - loss: 0.0291 - accuracy: 0.9178
-    Epoch 103/300
-    73/73 [==============================] - 0s 130us/sample - loss: 0.0224 - accuracy: 0.9178
-    Epoch 104/300
-    73/73 [==============================] - 0s 140us/sample - loss: 0.0235 - accuracy: 0.9178
-    Epoch 105/300
-    73/73 [==============================] - 0s 147us/sample - loss: 0.0277 - accuracy: 0.9041
-    Epoch 106/300
-    73/73 [==============================] - 0s 125us/sample - loss: 0.0219 - accuracy: 0.9178
-    Epoch 107/300
-    73/73 [==============================] - 0s 139us/sample - loss: 0.0219 - accuracy: 0.9315
-    Epoch 108/300
-    73/73 [==============================] - 0s 140us/sample - loss: 0.0253 - accuracy: 0.9178
-    Epoch 109/300
-    73/73 [==============================] - 0s 127us/sample - loss: 0.0243 - accuracy: 0.9315
-    Epoch 110/300
-    73/73 [==============================] - 0s 137us/sample - loss: 0.0234 - accuracy: 0.9178
-    Epoch 111/300
-    73/73 [==============================] - 0s 136us/sample - loss: 0.0318 - accuracy: 0.9041
-    Epoch 112/300
-    73/73 [==============================] - 0s 121us/sample - loss: 0.0215 - accuracy: 0.9178
-    Epoch 113/300
-    73/73 [==============================] - 0s 129us/sample - loss: 0.0281 - accuracy: 0.9178
-    Epoch 114/300
-    73/73 [==============================] - 0s 143us/sample - loss: 0.0227 - accuracy: 0.9315
-    Epoch 115/300
-    73/73 [==============================] - 0s 125us/sample - loss: 0.0270 - accuracy: 0.9178
-    Epoch 116/300
-    73/73 [==============================] - 0s 133us/sample - loss: 0.0277 - accuracy: 0.9178
-    Epoch 117/300
-    73/73 [==============================] - 0s 139us/sample - loss: 0.0308 - accuracy: 0.9178
-    Epoch 118/300
-    73/73 [==============================] - 0s 129us/sample - loss: 0.0287 - accuracy: 0.9315
-    Epoch 119/300
-    73/73 [==============================] - 0s 141us/sample - loss: 0.0218 - accuracy: 0.9178
-    Epoch 120/300
-    73/73 [==============================] - 0s 143us/sample - loss: 0.0239 - accuracy: 0.9178
-    Epoch 121/300
-    73/73 [==============================] - 0s 167us/sample - loss: 0.0254 - accuracy: 0.9178
-    Epoch 122/300
-    73/73 [==============================] - 0s 172us/sample - loss: 0.0218 - accuracy: 0.9178
-    Epoch 123/300
-    73/73 [==============================] - 0s 174us/sample - loss: 0.0221 - accuracy: 0.9178
-    Epoch 124/300
-    73/73 [==============================] - 0s 163us/sample - loss: 0.0272 - accuracy: 0.9178
-    Epoch 125/300
-    73/73 [==============================] - 0s 146us/sample - loss: 0.0216 - accuracy: 0.9178
-    Epoch 126/300
-    73/73 [==============================] - 0s 148us/sample - loss: 0.0231 - accuracy: 0.9178
-    Epoch 127/300
-    73/73 [==============================] - 0s 130us/sample - loss: 0.0228 - accuracy: 0.9178
-    Epoch 128/300
-    73/73 [==============================] - 0s 144us/sample - loss: 0.0219 - accuracy: 0.9178
-    Epoch 129/300
-    73/73 [==============================] - 0s 136us/sample - loss: 0.0241 - accuracy: 0.9178
-    Epoch 130/300
-    73/73 [==============================] - 0s 134us/sample - loss: 0.0245 - accuracy: 0.9178
-    Epoch 131/300
-    73/73 [==============================] - 0s 136us/sample - loss: 0.0233 - accuracy: 0.9315
-    Epoch 132/300
-    73/73 [==============================] - 0s 135us/sample - loss: 0.0211 - accuracy: 0.9178
-    Epoch 133/300
-    73/73 [==============================] - 0s 131us/sample - loss: 0.0221 - accuracy: 0.9178
-    Epoch 134/300
-    73/73 [==============================] - 0s 135us/sample - loss: 0.0244 - accuracy: 0.9178
-    Epoch 135/300
-    73/73 [==============================] - 0s 136us/sample - loss: 0.0223 - accuracy: 0.9315
-    Epoch 136/300
-    73/73 [==============================] - 0s 130us/sample - loss: 0.0332 - accuracy: 0.9041
-    Epoch 137/300
-    73/73 [==============================] - 0s 139us/sample - loss: 0.0217 - accuracy: 0.9178
-    Epoch 138/300
-    73/73 [==============================] - 0s 136us/sample - loss: 0.0253 - accuracy: 0.9178
-    Epoch 139/300
-    73/73 [==============================] - 0s 134us/sample - loss: 0.0203 - accuracy: 0.9178
-    Epoch 140/300
-    73/73 [==============================] - 0s 145us/sample - loss: 0.0219 - accuracy: 0.9178
-    Epoch 141/300
-    73/73 [==============================] - 0s 139us/sample - loss: 0.0281 - accuracy: 0.9178
-    Epoch 142/300
-    73/73 [==============================] - 0s 131us/sample - loss: 0.0206 - accuracy: 0.9178
-    Epoch 143/300
-    73/73 [==============================] - 0s 143us/sample - loss: 0.0269 - accuracy: 0.9041
-    Epoch 144/300
-    73/73 [==============================] - 0s 144us/sample - loss: 0.0293 - accuracy: 0.9178
-    Epoch 145/300
-    73/73 [==============================] - 0s 131us/sample - loss: 0.0290 - accuracy: 0.9178
-    Epoch 146/300
-    73/73 [==============================] - 0s 125us/sample - loss: 0.0198 - accuracy: 0.9178
-    Epoch 147/300
-    73/73 [==============================] - 0s 137us/sample - loss: 0.0242 - accuracy: 0.9178
-    Epoch 148/300
-    73/73 [==============================] - 0s 135us/sample - loss: 0.0218 - accuracy: 0.9178
-    Epoch 149/300
-    73/73 [==============================] - 0s 134us/sample - loss: 0.0267 - accuracy: 0.9041
-    Epoch 150/300
-    73/73 [==============================] - 0s 149us/sample - loss: 0.0221 - accuracy: 0.9178
-    Epoch 151/300
-    73/73 [==============================] - 0s 139us/sample - loss: 0.0222 - accuracy: 0.9178
-    Epoch 152/300
-    73/73 [==============================] - 0s 132us/sample - loss: 0.0225 - accuracy: 0.9315
-    Epoch 153/300
-    73/73 [==============================] - 0s 128us/sample - loss: 0.0240 - accuracy: 0.9315
-    Epoch 154/300
-    73/73 [==============================] - 0s 129us/sample - loss: 0.0218 - accuracy: 0.9178
-    Epoch 155/300
-    73/73 [==============================] - 0s 133us/sample - loss: 0.0282 - accuracy: 0.9178
-    Epoch 156/300
-    73/73 [==============================] - 0s 131us/sample - loss: 0.0226 - accuracy: 0.9178
-    Epoch 157/300
-    73/73 [==============================] - 0s 130us/sample - loss: 0.0232 - accuracy: 0.9178
-    Epoch 158/300
-    73/73 [==============================] - 0s 133us/sample - loss: 0.0217 - accuracy: 0.9178
-    Epoch 159/300
-    73/73 [==============================] - 0s 128us/sample - loss: 0.0191 - accuracy: 0.9178
-    Epoch 160/300
-    73/73 [==============================] - 0s 128us/sample - loss: 0.0214 - accuracy: 0.9178
-    Epoch 161/300
-    73/73 [==============================] - 0s 136us/sample - loss: 0.0201 - accuracy: 0.9178
-    Epoch 162/300
-    73/73 [==============================] - 0s 126us/sample - loss: 0.0233 - accuracy: 0.9178
-    Epoch 163/300
-    73/73 [==============================] - 0s 133us/sample - loss: 0.0217 - accuracy: 0.9178
-    Epoch 164/300
-    73/73 [==============================] - 0s 140us/sample - loss: 0.0189 - accuracy: 0.9178
-    Epoch 165/300
-    73/73 [==============================] - 0s 136us/sample - loss: 0.0192 - accuracy: 0.9178
-    Epoch 166/300
-    73/73 [==============================] - 0s 130us/sample - loss: 0.0230 - accuracy: 0.9178
-    Epoch 167/300
-    73/73 [==============================] - 0s 134us/sample - loss: 0.0235 - accuracy: 0.9178
-    Epoch 168/300
-    73/73 [==============================] - 0s 142us/sample - loss: 0.0185 - accuracy: 0.9178
-    Epoch 169/300
-    73/73 [==============================] - 0s 128us/sample - loss: 0.0304 - accuracy: 0.9041
-    Epoch 170/300
-    73/73 [==============================] - 0s 134us/sample - loss: 0.0198 - accuracy: 0.9178
-    Epoch 171/300
-    73/73 [==============================] - 0s 134us/sample - loss: 0.0215 - accuracy: 0.9178
-    Epoch 172/300
-    73/73 [==============================] - 0s 134us/sample - loss: 0.0243 - accuracy: 0.9178
-    Epoch 173/300
-    73/73 [==============================] - 0s 136us/sample - loss: 0.0256 - accuracy: 0.9178
-    Epoch 174/300
-    73/73 [==============================] - 0s 132us/sample - loss: 0.0239 - accuracy: 0.9178
-    Epoch 175/300
-    73/73 [==============================] - 0s 131us/sample - loss: 0.0205 - accuracy: 0.9178
-    Epoch 176/300
-    73/73 [==============================] - 0s 138us/sample - loss: 0.0185 - accuracy: 0.9178
-    Epoch 177/300
-    73/73 [==============================] - 0s 151us/sample - loss: 0.0261 - accuracy: 0.9178
-    Epoch 178/300
-    73/73 [==============================] - 0s 135us/sample - loss: 0.0203 - accuracy: 0.9315
-    Epoch 179/300
-    73/73 [==============================] - 0s 152us/sample - loss: 0.0225 - accuracy: 0.9178
-    Epoch 180/300
-    73/73 [==============================] - 0s 126us/sample - loss: 0.0236 - accuracy: 0.9178
-    Epoch 181/300
-    73/73 [==============================] - 0s 137us/sample - loss: 0.0207 - accuracy: 0.9178
-    Epoch 182/300
-    73/73 [==============================] - 0s 128us/sample - loss: 0.0218 - accuracy: 0.9178
-    Epoch 183/300
-    73/73 [==============================] - 0s 135us/sample - loss: 0.0193 - accuracy: 0.9178
-    Epoch 184/300
-    73/73 [==============================] - 0s 136us/sample - loss: 0.0184 - accuracy: 0.9315
-    Epoch 185/300
-    73/73 [==============================] - 0s 136us/sample - loss: 0.0186 - accuracy: 0.9178
-    Epoch 186/300
-    73/73 [==============================] - 0s 135us/sample - loss: 0.0233 - accuracy: 0.9178
-    Epoch 187/300
-    73/73 [==============================] - 0s 141us/sample - loss: 0.0192 - accuracy: 0.9178
-    Epoch 188/300
-    73/73 [==============================] - 0s 130us/sample - loss: 0.0252 - accuracy: 0.9041
-    Epoch 189/300
-    73/73 [==============================] - 0s 131us/sample - loss: 0.0246 - accuracy: 0.9178
-    Epoch 190/300
-    73/73 [==============================] - 0s 145us/sample - loss: 0.0221 - accuracy: 0.9315
-    Epoch 191/300
-    73/73 [==============================] - 0s 143us/sample - loss: 0.0218 - accuracy: 0.9178
-    Epoch 192/300
-    73/73 [==============================] - 0s 153us/sample - loss: 0.0205 - accuracy: 0.9178
-    Epoch 193/300
-    73/73 [==============================] - 0s 142us/sample - loss: 0.0255 - accuracy: 0.9178
-    Epoch 194/300
-    73/73 [==============================] - 0s 136us/sample - loss: 0.0202 - accuracy: 0.9178
-    Epoch 195/300
-    73/73 [==============================] - 0s 130us/sample - loss: 0.0178 - accuracy: 0.9315
-    Epoch 196/300
-    73/73 [==============================] - 0s 145us/sample - loss: 0.0193 - accuracy: 0.9315
-    Epoch 197/300
-    73/73 [==============================] - 0s 127us/sample - loss: 0.0206 - accuracy: 0.9315
-    Epoch 198/300
-    73/73 [==============================] - 0s 130us/sample - loss: 0.0202 - accuracy: 0.9178
-    Epoch 199/300
-    73/73 [==============================] - 0s 129us/sample - loss: 0.0283 - accuracy: 0.9178
-    Epoch 200/300
-    73/73 [==============================] - 0s 131us/sample - loss: 0.0263 - accuracy: 0.9178
-    Epoch 201/300
-    73/73 [==============================] - 0s 129us/sample - loss: 0.0202 - accuracy: 0.9178
-    Epoch 202/300
-    73/73 [==============================] - 0s 136us/sample - loss: 0.0241 - accuracy: 0.9178
-    Epoch 203/300
-    73/73 [==============================] - 0s 123us/sample - loss: 0.0231 - accuracy: 0.9315
-    Epoch 204/300
-    73/73 [==============================] - 0s 126us/sample - loss: 0.0214 - accuracy: 0.9178
-    Epoch 205/300
-    73/73 [==============================] - 0s 132us/sample - loss: 0.0252 - accuracy: 0.9178
-    Epoch 206/300
-    73/73 [==============================] - 0s 126us/sample - loss: 0.0215 - accuracy: 0.9178
-    Epoch 207/300
-    73/73 [==============================] - 0s 127us/sample - loss: 0.0258 - accuracy: 0.9178
-    Epoch 208/300
-    73/73 [==============================] - 0s 132us/sample - loss: 0.0239 - accuracy: 0.9178
-    Epoch 209/300
-    73/73 [==============================] - 0s 130us/sample - loss: 0.0240 - accuracy: 0.9178
-    Epoch 210/300
-    73/73 [==============================] - 0s 133us/sample - loss: 0.0218 - accuracy: 0.9178
-    Epoch 211/300
-    73/73 [==============================] - ETA: 0s - loss: 0.0356 - accuracy: 0.86 - 0s 138us/sample - loss: 0.0184 - accuracy: 0.9315
-    Epoch 212/300
-    73/73 [==============================] - 0s 131us/sample - loss: 0.0298 - accuracy: 0.9178
-    Epoch 213/300
-    73/73 [==============================] - 0s 127us/sample - loss: 0.0211 - accuracy: 0.9178
-    Epoch 214/300
-    73/73 [==============================] - 0s 145us/sample - loss: 0.0238 - accuracy: 0.9178
-    Epoch 215/300
-    73/73 [==============================] - 0s 139us/sample - loss: 0.0247 - accuracy: 0.9315
-    Epoch 216/300
-    73/73 [==============================] - 0s 136us/sample - loss: 0.0232 - accuracy: 0.9178
-    Epoch 217/300
-    73/73 [==============================] - 0s 148us/sample - loss: 0.0230 - accuracy: 0.9178
-    Epoch 218/300
-    73/73 [==============================] - 0s 143us/sample - loss: 0.0227 - accuracy: 0.9178
-    Epoch 219/300
-    73/73 [==============================] - 0s 137us/sample - loss: 0.0234 - accuracy: 0.9178
-    Epoch 220/300
-    73/73 [==============================] - 0s 133us/sample - loss: 0.0213 - accuracy: 0.9178
-    Epoch 221/300
-    73/73 [==============================] - 0s 136us/sample - loss: 0.0199 - accuracy: 0.9178
-    Epoch 222/300
-    73/73 [==============================] - 0s 124us/sample - loss: 0.0208 - accuracy: 0.9178
-    Epoch 223/300
-    73/73 [==============================] - 0s 136us/sample - loss: 0.0222 - accuracy: 0.9178
-    Epoch 224/300
-    73/73 [==============================] - 0s 138us/sample - loss: 0.0293 - accuracy: 0.9178
-    Epoch 225/300
-    73/73 [==============================] - 0s 123us/sample - loss: 0.0230 - accuracy: 0.9178
-    Epoch 226/300
-    73/73 [==============================] - 0s 137us/sample - loss: 0.0227 - accuracy: 0.9178
-    Epoch 227/300
-    73/73 [==============================] - 0s 135us/sample - loss: 0.0258 - accuracy: 0.9315
-    Epoch 228/300
-    73/73 [==============================] - 0s 143us/sample - loss: 0.0209 - accuracy: 0.9178
-    Epoch 229/300
-    73/73 [==============================] - 0s 132us/sample - loss: 0.0219 - accuracy: 0.9178
-    Epoch 230/300
-    73/73 [==============================] - 0s 141us/sample - loss: 0.0223 - accuracy: 0.9178
-    Epoch 231/300
-    73/73 [==============================] - 0s 134us/sample - loss: 0.0259 - accuracy: 0.9178
-    Epoch 232/300
-    73/73 [==============================] - 0s 129us/sample - loss: 0.0231 - accuracy: 0.9178
-    Epoch 233/300
-    73/73 [==============================] - 0s 145us/sample - loss: 0.0199 - accuracy: 0.9178
-    Epoch 234/300
-    73/73 [==============================] - 0s 138us/sample - loss: 0.0260 - accuracy: 0.9178
-    Epoch 235/300
-    73/73 [==============================] - 0s 134us/sample - loss: 0.0195 - accuracy: 0.9178
-    Epoch 236/300
-    73/73 [==============================] - 0s 132us/sample - loss: 0.0214 - accuracy: 0.9178
-    Epoch 237/300
-    73/73 [==============================] - 0s 135us/sample - loss: 0.0244 - accuracy: 0.9178
-    Epoch 238/300
-    73/73 [==============================] - 0s 131us/sample - loss: 0.0228 - accuracy: 0.9178
-    Epoch 239/300
-    73/73 [==============================] - 0s 132us/sample - loss: 0.0214 - accuracy: 0.9178
-    Epoch 240/300
-    73/73 [==============================] - 0s 129us/sample - loss: 0.0260 - accuracy: 0.9041
-    Epoch 241/300
-    73/73 [==============================] - 0s 131us/sample - loss: 0.0224 - accuracy: 0.9315
-    Epoch 242/300
-    73/73 [==============================] - 0s 130us/sample - loss: 0.0179 - accuracy: 0.9178
-    Epoch 243/300
-    73/73 [==============================] - 0s 134us/sample - loss: 0.0210 - accuracy: 0.9178
-    Epoch 244/300
-    73/73 [==============================] - 0s 136us/sample - loss: 0.0194 - accuracy: 0.9178
-    Epoch 245/300
-    73/73 [==============================] - ETA: 0s - loss: 9.4358e-04 - accuracy: 1.00 - 0s 134us/sample - loss: 0.0238 - accuracy: 0.9178
-    Epoch 246/300
-    73/73 [==============================] - ETA: 0s - loss: 0.0306 - accuracy: 0.93 - 0s 132us/sample - loss: 0.0246 - accuracy: 0.9178
-    Epoch 247/300
-    73/73 [==============================] - 0s 128us/sample - loss: 0.0236 - accuracy: 0.9178
-    Epoch 248/300
-    73/73 [==============================] - 0s 136us/sample - loss: 0.0217 - accuracy: 0.9178
-    Epoch 249/300
-    73/73 [==============================] - 0s 128us/sample - loss: 0.0269 - accuracy: 0.9178
-    Epoch 250/300
-    73/73 [==============================] - 0s 131us/sample - loss: 0.0212 - accuracy: 0.9178
-    Epoch 251/300
-    73/73 [==============================] - 0s 136us/sample - loss: 0.0231 - accuracy: 0.9178
-    Epoch 252/300
-    73/73 [==============================] - 0s 134us/sample - loss: 0.0204 - accuracy: 0.9178
-    Epoch 253/300
-    73/73 [==============================] - 0s 128us/sample - loss: 0.0168 - accuracy: 0.9178
-    Epoch 254/300
-    73/73 [==============================] - 0s 134us/sample - loss: 0.0236 - accuracy: 0.9178
-    Epoch 255/300
-    73/73 [==============================] - 0s 136us/sample - loss: 0.0206 - accuracy: 0.9178
-    Epoch 256/300
-    73/73 [==============================] - 0s 126us/sample - loss: 0.0222 - accuracy: 0.9178
-    Epoch 257/300
-    73/73 [==============================] - 0s 143us/sample - loss: 0.0223 - accuracy: 0.9178
-    Epoch 258/300
-    73/73 [==============================] - 0s 132us/sample - loss: 0.0247 - accuracy: 0.9178
-    Epoch 259/300
-    73/73 [==============================] - 0s 127us/sample - loss: 0.0229 - accuracy: 0.9178
-    Epoch 260/300
-    73/73 [==============================] - 0s 133us/sample - loss: 0.0201 - accuracy: 0.9178
-    Epoch 261/300
-    73/73 [==============================] - 0s 135us/sample - loss: 0.0197 - accuracy: 0.9178
-    Epoch 262/300
-    73/73 [==============================] - 0s 128us/sample - loss: 0.0230 - accuracy: 0.9178
-    Epoch 263/300
-    73/73 [==============================] - 0s 130us/sample - loss: 0.0188 - accuracy: 0.9178
-    Epoch 264/300
-    73/73 [==============================] - 0s 134us/sample - loss: 0.0213 - accuracy: 0.9178
-    Epoch 265/300
-    73/73 [==============================] - 0s 124us/sample - loss: 0.0196 - accuracy: 0.9178
-    Epoch 266/300
-    73/73 [==============================] - 0s 134us/sample - loss: 0.0225 - accuracy: 0.9178
-    Epoch 267/300
-    73/73 [==============================] - 0s 145us/sample - loss: 0.0227 - accuracy: 0.9178
-    Epoch 268/300
-    73/73 [==============================] - 0s 133us/sample - loss: 0.0168 - accuracy: 0.9178
-    Epoch 269/300
-    73/73 [==============================] - 0s 135us/sample - loss: 0.0214 - accuracy: 0.9178
-    Epoch 270/300
-    73/73 [==============================] - 0s 130us/sample - loss: 0.0223 - accuracy: 0.9178
-    Epoch 271/300
-    73/73 [==============================] - 0s 128us/sample - loss: 0.0207 - accuracy: 0.9178
-    Epoch 272/300
-    73/73 [==============================] - 0s 132us/sample - loss: 0.0225 - accuracy: 0.9178
-    Epoch 273/300
-    73/73 [==============================] - 0s 133us/sample - loss: 0.0200 - accuracy: 0.9178
-    Epoch 274/300
-    73/73 [==============================] - 0s 131us/sample - loss: 0.0225 - accuracy: 0.9178
-    Epoch 275/300
-    73/73 [==============================] - 0s 150us/sample - loss: 0.0271 - accuracy: 0.9178
-    Epoch 276/300
-    73/73 [==============================] - 0s 134us/sample - loss: 0.0204 - accuracy: 0.9178
-    Epoch 277/300
-    73/73 [==============================] - 0s 138us/sample - loss: 0.0249 - accuracy: 0.9178
-    Epoch 278/300
-    73/73 [==============================] - 0s 134us/sample - loss: 0.0227 - accuracy: 0.9178
-    Epoch 279/300
-    73/73 [==============================] - 0s 139us/sample - loss: 0.0240 - accuracy: 0.9178
-    Epoch 280/300
-    73/73 [==============================] - 0s 133us/sample - loss: 0.0219 - accuracy: 0.9178
-    Epoch 281/300
-    73/73 [==============================] - 0s 128us/sample - loss: 0.0257 - accuracy: 0.9041
-    Epoch 282/300
-    73/73 [==============================] - 0s 141us/sample - loss: 0.0187 - accuracy: 0.9178
-    Epoch 283/300
-    73/73 [==============================] - 0s 129us/sample - loss: 0.0199 - accuracy: 0.9178
-    Epoch 284/300
-    73/73 [==============================] - 0s 131us/sample - loss: 0.0192 - accuracy: 0.9178
-    Epoch 285/300
-    73/73 [==============================] - 0s 139us/sample - loss: 0.0205 - accuracy: 0.9178
-    Epoch 286/300
-    73/73 [==============================] - 0s 130us/sample - loss: 0.0214 - accuracy: 0.9178
-    Epoch 287/300
-    73/73 [==============================] - 0s 128us/sample - loss: 0.0219 - accuracy: 0.9178
-    Epoch 288/300
-    73/73 [==============================] - 0s 132us/sample - loss: 0.0220 - accuracy: 0.9178
-    Epoch 289/300
-    73/73 [==============================] - 0s 128us/sample - loss: 0.0210 - accuracy: 0.9178
-    Epoch 290/300
-    73/73 [==============================] - 0s 195us/sample - loss: 0.0199 - accuracy: 0.9178
-    Epoch 291/300
-    73/73 [==============================] - 0s 154us/sample - loss: 0.0227 - accuracy: 0.9178
-    Epoch 292/300
-    73/73 [==============================] - ETA: 0s - loss: 0.0282 - accuracy: 0.80 - 0s 150us/sample - loss: 0.0180 - accuracy: 0.9178
-    Epoch 293/300
-    73/73 [==============================] - 0s 184us/sample - loss: 0.0177 - accuracy: 0.9178
-    Epoch 294/300
-    73/73 [==============================] - 0s 144us/sample - loss: 0.0222 - accuracy: 0.9315
-    Epoch 295/300
-    73/73 [==============================] - 0s 133us/sample - loss: 0.0180 - accuracy: 0.9178
-    Epoch 296/300
-    73/73 [==============================] - 0s 133us/sample - loss: 0.0214 - accuracy: 0.9178
-    Epoch 297/300
-    73/73 [==============================] - 0s 141us/sample - loss: 0.0206 - accuracy: 0.9178
-    Epoch 298/300
-    73/73 [==============================] - 0s 136us/sample - loss: 0.0208 - accuracy: 0.9178
-    Epoch 299/300
-    73/73 [==============================] - 0s 128us/sample - loss: 0.0222 - accuracy: 0.9178
-    Epoch 300/300
-    73/73 [==============================] - 0s 136us/sample - loss: 0.0190 - accuracy: 0.9178
-    Model: "sequential_13"
-    _________________________________________________________________
-    Layer (type)                 Output Shape              Param #   
-    =================================================================
-    dense_32 (Dense)             (None, 128)               4608      
-    _________________________________________________________________
-    activation_32 (Activation)   (None, 128)               0         
-    _________________________________________________________________
-    dropout_21 (Dropout)         (None, 128)               0         
-    _________________________________________________________________
-    dense_33 (Dense)             (None, 1)                 129       
-    _________________________________________________________________
-    activation_33 (Activation)   (None, 1)                 0         
-    =================================================================
-    Total params: 4,737
-    Trainable params: 4,737
-    Non-trainable params: 0
-    _________________________________________________________________
+    WARNING:tensorflow:sample_weight modes were coerced from
+      ...
+        to  
+      ['...']
     Train on 74 samples
     Epoch 1/300
-    74/74 [==============================] - 1s 7ms/sample - loss: 0.1509 - accuracy: 0.3784
+    74/74 [==============================] - 0s 7ms/sample - loss: 0.1487 - accuracy: 0.5270
     Epoch 2/300
-    74/74 [==============================] - 0s 144us/sample - loss: 0.1408 - accuracy: 0.4189
-    Epoch 3/300
-    74/74 [==============================] - 0s 135us/sample - loss: 0.1246 - accuracy: 0.5811
-    Epoch 4/300
-    74/74 [==============================] - 0s 138us/sample - loss: 0.1236 - accuracy: 0.6351
-    Epoch 5/300
-    74/74 [==============================] - 0s 130us/sample - loss: 0.1165 - accuracy: 0.6622
-    Epoch 6/300
-    74/74 [==============================] - 0s 136us/sample - loss: 0.1111 - accuracy: 0.7027
-    Epoch 7/300
-    74/74 [==============================] - 0s 138us/sample - loss: 0.1085 - accuracy: 0.7297
-    Epoch 8/300
-    74/74 [==============================] - 0s 130us/sample - loss: 0.1057 - accuracy: 0.7973
-    Epoch 9/300
-    74/74 [==============================] - 0s 129us/sample - loss: 0.1005 - accuracy: 0.8108
-    Epoch 10/300
-    74/74 [==============================] - 0s 132us/sample - loss: 0.1018 - accuracy: 0.8243
-    Epoch 11/300
-    74/74 [==============================] - 0s 132us/sample - loss: 0.0886 - accuracy: 0.8108
-    Epoch 12/300
-    74/74 [==============================] - 0s 126us/sample - loss: 0.0900 - accuracy: 0.8649
-    Epoch 13/300
-    74/74 [==============================] - 0s 129us/sample - loss: 0.0827 - accuracy: 0.8784
-    Epoch 14/300
-    74/74 [==============================] - 0s 131us/sample - loss: 0.0843 - accuracy: 0.8514
-    Epoch 15/300
-    74/74 [==============================] - 0s 132us/sample - loss: 0.0771 - accuracy: 0.8784
-    Epoch 16/300
-    74/74 [==============================] - 0s 132us/sample - loss: 0.0774 - accuracy: 0.8919
-    Epoch 17/300
-    74/74 [==============================] - 0s 131us/sample - loss: 0.0703 - accuracy: 0.8784
-    Epoch 18/300
-    74/74 [==============================] - 0s 130us/sample - loss: 0.0686 - accuracy: 0.8784
-    Epoch 19/300
-    74/74 [==============================] - 0s 144us/sample - loss: 0.0724 - accuracy: 0.8784
-    Epoch 20/300
-    74/74 [==============================] - 0s 137us/sample - loss: 0.0600 - accuracy: 0.8919
-    Epoch 21/300
-    74/74 [==============================] - 0s 136us/sample - loss: 0.0621 - accuracy: 0.8784
-    Epoch 22/300
-    74/74 [==============================] - 0s 142us/sample - loss: 0.0650 - accuracy: 0.8784
-    Epoch 23/300
-    74/74 [==============================] - 0s 137us/sample - loss: 0.0611 - accuracy: 0.8784
-    Epoch 24/300
-    74/74 [==============================] - 0s 125us/sample - loss: 0.0568 - accuracy: 0.8784
-    Epoch 25/300
-    74/74 [==============================] - 0s 144us/sample - loss: 0.0544 - accuracy: 0.8784
-    Epoch 26/300
-    74/74 [==============================] - 0s 135us/sample - loss: 0.0543 - accuracy: 0.8919
-    Epoch 27/300
-    74/74 [==============================] - 0s 128us/sample - loss: 0.0568 - accuracy: 0.8784
-    Epoch 28/300
-    74/74 [==============================] - 0s 128us/sample - loss: 0.0595 - accuracy: 0.8784
-    Epoch 29/300
-    74/74 [==============================] - 0s 135us/sample - loss: 0.0570 - accuracy: 0.8784
-    Epoch 30/300
-    74/74 [==============================] - 0s 123us/sample - loss: 0.0481 - accuracy: 0.8784
-    Epoch 31/300
-    74/74 [==============================] - 0s 126us/sample - loss: 0.0461 - accuracy: 0.8784
-    Epoch 32/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0500 - accuracy: 0.8784
-    Epoch 33/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0429 - accuracy: 0.8919
-    Epoch 34/300
-    74/74 [==============================] - 0s 127us/sample - loss: 0.0440 - accuracy: 0.8784
-    Epoch 35/300
-    74/74 [==============================] - 0s 122us/sample - loss: 0.0505 - accuracy: 0.8784
-    Epoch 36/300
-    74/74 [==============================] - 0s 123us/sample - loss: 0.0483 - accuracy: 0.8784
-    Epoch 37/300
-    74/74 [==============================] - 0s 131us/sample - loss: 0.0430 - accuracy: 0.8784
-    Epoch 38/300
-    74/74 [==============================] - 0s 132us/sample - loss: 0.0395 - accuracy: 0.8919
-    Epoch 39/300
-    74/74 [==============================] - 0s 123us/sample - loss: 0.0417 - accuracy: 0.8784
-    Epoch 40/300
-    74/74 [==============================] - 0s 133us/sample - loss: 0.0424 - accuracy: 0.8919
-    Epoch 41/300
-    74/74 [==============================] - 0s 128us/sample - loss: 0.0397 - accuracy: 0.8919
-    Epoch 42/300
-    74/74 [==============================] - 0s 139us/sample - loss: 0.0396 - accuracy: 0.8919
-    Epoch 43/300
-    74/74 [==============================] - 0s 133us/sample - loss: 0.0325 - accuracy: 0.8784
-    Epoch 44/300
-    74/74 [==============================] - 0s 128us/sample - loss: 0.0402 - accuracy: 0.8919
-    Epoch 45/300
-    74/74 [==============================] - 0s 127us/sample - loss: 0.0396 - accuracy: 0.8919
-    Epoch 46/300
-    74/74 [==============================] - 0s 133us/sample - loss: 0.0361 - accuracy: 0.8919
-    Epoch 47/300
-    74/74 [==============================] - 0s 121us/sample - loss: 0.0377 - accuracy: 0.8919
-    Epoch 48/300
-    74/74 [==============================] - 0s 128us/sample - loss: 0.0379 - accuracy: 0.8919
-    Epoch 49/300
-    74/74 [==============================] - 0s 122us/sample - loss: 0.0373 - accuracy: 0.8919
-    Epoch 50/300
-    74/74 [==============================] - 0s 117us/sample - loss: 0.0379 - accuracy: 0.8919
-    Epoch 51/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0380 - accuracy: 0.8919
-    Epoch 52/300
-    74/74 [==============================] - 0s 121us/sample - loss: 0.0398 - accuracy: 0.8919
-    Epoch 53/300
-    74/74 [==============================] - 0s 129us/sample - loss: 0.0424 - accuracy: 0.8784
-    Epoch 54/300
-    74/74 [==============================] - 0s 129us/sample - loss: 0.0390 - accuracy: 0.8919
-    Epoch 55/300
-    74/74 [==============================] - 0s 122us/sample - loss: 0.0322 - accuracy: 0.8919
-    Epoch 56/300
-    74/74 [==============================] - 0s 123us/sample - loss: 0.0310 - accuracy: 0.8919
-    Epoch 57/300
-    74/74 [==============================] - 0s 122us/sample - loss: 0.0354 - accuracy: 0.8919
-    Epoch 58/300
-    74/74 [==============================] - 0s 142us/sample - loss: 0.0365 - accuracy: 0.8919
-    Epoch 59/300
-    74/74 [==============================] - 0s 132us/sample - loss: 0.0312 - accuracy: 0.8919
-    Epoch 60/300
-    74/74 [==============================] - 0s 122us/sample - loss: 0.0396 - accuracy: 0.8919
-    Epoch 61/300
-    74/74 [==============================] - 0s 121us/sample - loss: 0.0326 - accuracy: 0.8919
-    Epoch 62/300
-    74/74 [==============================] - 0s 128us/sample - loss: 0.0389 - accuracy: 0.8919
-    Epoch 63/300
-    74/74 [==============================] - 0s 121us/sample - loss: 0.0311 - accuracy: 0.8919
-    Epoch 64/300
-    74/74 [==============================] - 0s 122us/sample - loss: 0.0341 - accuracy: 0.8919
-    Epoch 65/300
-    74/74 [==============================] - ETA: 0s - loss: 0.0291 - accuracy: 0.86 - 0s 138us/sample - loss: 0.0308 - accuracy: 0.8919
-    Epoch 66/300
-    74/74 [==============================] - 0s 122us/sample - loss: 0.0383 - accuracy: 0.8919
-    Epoch 67/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0340 - accuracy: 0.8919
-    Epoch 68/300
-    74/74 [==============================] - 0s 123us/sample - loss: 0.0321 - accuracy: 0.8919
-    Epoch 69/300
-    74/74 [==============================] - 0s 120us/sample - loss: 0.0310 - accuracy: 0.8919
-    Epoch 70/300
-    74/74 [==============================] - 0s 122us/sample - loss: 0.0316 - accuracy: 0.8919
-    Epoch 71/300
-    74/74 [==============================] - 0s 120us/sample - loss: 0.0296 - accuracy: 0.8919
-    Epoch 72/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0406 - accuracy: 0.8919
-    Epoch 73/300
-    74/74 [==============================] - 0s 129us/sample - loss: 0.0283 - accuracy: 0.8919
-    Epoch 74/300
-    74/74 [==============================] - 0s 125us/sample - loss: 0.0326 - accuracy: 0.8919
-    Epoch 75/300
-    74/74 [==============================] - 0s 128us/sample - loss: 0.0310 - accuracy: 0.8919
-    Epoch 76/300
-    74/74 [==============================] - 0s 125us/sample - loss: 0.0299 - accuracy: 0.8919
-    Epoch 77/300
-    74/74 [==============================] - 0s 121us/sample - loss: 0.0341 - accuracy: 0.8919
-    Epoch 78/300
-    74/74 [==============================] - 0s 126us/sample - loss: 0.0316 - accuracy: 0.8919
-    Epoch 79/300
-    74/74 [==============================] - 0s 131us/sample - loss: 0.0306 - accuracy: 0.8919
-    Epoch 80/300
-    74/74 [==============================] - 0s 123us/sample - loss: 0.0365 - accuracy: 0.8919
-    Epoch 81/300
-    74/74 [==============================] - 0s 129us/sample - loss: 0.0367 - accuracy: 0.8919
-    Epoch 82/300
-    74/74 [==============================] - 0s 125us/sample - loss: 0.0322 - accuracy: 0.8919
-    Epoch 83/300
-    74/74 [==============================] - 0s 128us/sample - loss: 0.0370 - accuracy: 0.8919
-    Epoch 84/300
-    74/74 [==============================] - 0s 126us/sample - loss: 0.0311 - accuracy: 0.8919
-    Epoch 85/300
-    74/74 [==============================] - 0s 123us/sample - loss: 0.0341 - accuracy: 0.8919
-    Epoch 86/300
-    74/74 [==============================] - 0s 123us/sample - loss: 0.0275 - accuracy: 0.9054
-    Epoch 87/300
-    74/74 [==============================] - 0s 126us/sample - loss: 0.0279 - accuracy: 0.8919
-    Epoch 88/300
-    74/74 [==============================] - 0s 122us/sample - loss: 0.0300 - accuracy: 0.8919
-    Epoch 89/300
-    74/74 [==============================] - 0s 126us/sample - loss: 0.0319 - accuracy: 0.8919
-    Epoch 90/300
-    74/74 [==============================] - 0s 123us/sample - loss: 0.0285 - accuracy: 0.8919
-    Epoch 91/300
-    74/74 [==============================] - 0s 119us/sample - loss: 0.0328 - accuracy: 0.8919
-    Epoch 92/300
-    74/74 [==============================] - 0s 131us/sample - loss: 0.0316 - accuracy: 0.8919
-    Epoch 93/300
-    74/74 [==============================] - 0s 126us/sample - loss: 0.0355 - accuracy: 0.8919
-    Epoch 94/300
-    74/74 [==============================] - 0s 120us/sample - loss: 0.0332 - accuracy: 0.8919
-    Epoch 95/300
-    74/74 [==============================] - 0s 128us/sample - loss: 0.0370 - accuracy: 0.8919
-    Epoch 96/300
-    74/74 [==============================] - 0s 126us/sample - loss: 0.0320 - accuracy: 0.8919
-    Epoch 97/300
-    74/74 [==============================] - 0s 128us/sample - loss: 0.0365 - accuracy: 0.8919
-    Epoch 98/300
-    74/74 [==============================] - 0s 123us/sample - loss: 0.0280 - accuracy: 0.8919
-    Epoch 99/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0303 - accuracy: 0.8919
-    Epoch 100/300
-    74/74 [==============================] - 0s 122us/sample - loss: 0.0293 - accuracy: 0.8919
-    Epoch 101/300
-    74/74 [==============================] - 0s 127us/sample - loss: 0.0316 - accuracy: 0.8919
-    Epoch 102/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0334 - accuracy: 0.8919
-    Epoch 103/300
-    74/74 [==============================] - 0s 134us/sample - loss: 0.0285 - accuracy: 0.8919
-    Epoch 104/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0320 - accuracy: 0.8919
-    Epoch 105/300
-    74/74 [==============================] - 0s 123us/sample - loss: 0.0290 - accuracy: 0.8919
-    Epoch 106/300
-    74/74 [==============================] - 0s 125us/sample - loss: 0.0311 - accuracy: 0.8919
-    Epoch 107/300
-    74/74 [==============================] - 0s 125us/sample - loss: 0.0303 - accuracy: 0.8919
-    Epoch 108/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0286 - accuracy: 0.8919
-    Epoch 109/300
-    74/74 [==============================] - 0s 127us/sample - loss: 0.0297 - accuracy: 0.8919
-    Epoch 110/300
-    74/74 [==============================] - ETA: 0s - loss: 0.0160 - accuracy: 1.00 - 0s 121us/sample - loss: 0.0320 - accuracy: 0.8919
-    Epoch 111/300
-    74/74 [==============================] - 0s 126us/sample - loss: 0.0294 - accuracy: 0.8919
-    Epoch 112/300
-    74/74 [==============================] - 0s 127us/sample - loss: 0.0294 - accuracy: 0.8919
-    Epoch 113/300
-    74/74 [==============================] - 0s 134us/sample - loss: 0.0323 - accuracy: 0.8919
-    Epoch 114/300
-    74/74 [==============================] - 0s 129us/sample - loss: 0.0307 - accuracy: 0.8919
-    Epoch 115/300
-    74/74 [==============================] - 0s 141us/sample - loss: 0.0320 - accuracy: 0.8919
-    Epoch 116/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0285 - accuracy: 0.8919
-    Epoch 117/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0288 - accuracy: 0.8919
-    Epoch 118/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0332 - accuracy: 0.8919
-    Epoch 119/300
-    74/74 [==============================] - 0s 118us/sample - loss: 0.0336 - accuracy: 0.8919
-    Epoch 120/300
-    74/74 [==============================] - 0s 123us/sample - loss: 0.0276 - accuracy: 0.8919
-    Epoch 121/300
-    74/74 [==============================] - 0s 119us/sample - loss: 0.0306 - accuracy: 0.8919
-    Epoch 122/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0334 - accuracy: 0.8919
-    Epoch 123/300
-    74/74 [==============================] - 0s 123us/sample - loss: 0.0283 - accuracy: 0.8919
-    Epoch 124/300
-    74/74 [==============================] - 0s 121us/sample - loss: 0.0328 - accuracy: 0.8919
-    Epoch 125/300
-    74/74 [==============================] - 0s 122us/sample - loss: 0.0317 - accuracy: 0.8919
-    Epoch 126/300
-    74/74 [==============================] - 0s 132us/sample - loss: 0.0277 - accuracy: 0.8919
-    Epoch 127/300
-    74/74 [==============================] - 0s 127us/sample - loss: 0.0292 - accuracy: 0.8919
-    Epoch 128/300
-    74/74 [==============================] - 0s 135us/sample - loss: 0.0286 - accuracy: 0.8919
-    Epoch 129/300
-    74/74 [==============================] - 0s 132us/sample - loss: 0.0300 - accuracy: 0.8919
-    Epoch 130/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0374 - accuracy: 0.8919
-    Epoch 131/300
-    74/74 [==============================] - 0s 126us/sample - loss: 0.0295 - accuracy: 0.8919
-    Epoch 132/300
-    74/74 [==============================] - 0s 126us/sample - loss: 0.0294 - accuracy: 0.8919
-    Epoch 133/300
-    74/74 [==============================] - 0s 122us/sample - loss: 0.0303 - accuracy: 0.8919
-    Epoch 134/300
-    74/74 [==============================] - 0s 123us/sample - loss: 0.0311 - accuracy: 0.8919
-    Epoch 135/300
-    74/74 [==============================] - 0s 127us/sample - loss: 0.0352 - accuracy: 0.8784
-    Epoch 136/300
-    74/74 [==============================] - 0s 130us/sample - loss: 0.0294 - accuracy: 0.8919
-    Epoch 137/300
-    74/74 [==============================] - 0s 126us/sample - loss: 0.0288 - accuracy: 0.8919
-    Epoch 138/300
-    74/74 [==============================] - 0s 125us/sample - loss: 0.0333 - accuracy: 0.8919
-    Epoch 139/300
-    74/74 [==============================] - 0s 122us/sample - loss: 0.0289 - accuracy: 0.8919
-    Epoch 140/300
-    74/74 [==============================] - 0s 126us/sample - loss: 0.0303 - accuracy: 0.8919
-    Epoch 141/300
-    74/74 [==============================] - 0s 119us/sample - loss: 0.0319 - accuracy: 0.8919
-    Epoch 142/300
-    74/74 [==============================] - 0s 141us/sample - loss: 0.0311 - accuracy: 0.8919
-    Epoch 143/300
-    74/74 [==============================] - 0s 128us/sample - loss: 0.0295 - accuracy: 0.8919
-    Epoch 144/300
-    74/74 [==============================] - 0s 128us/sample - loss: 0.0299 - accuracy: 0.8919
-    Epoch 145/300
-    74/74 [==============================] - 0s 140us/sample - loss: 0.0269 - accuracy: 0.8919
-    Epoch 146/300
-    74/74 [==============================] - 0s 126us/sample - loss: 0.0319 - accuracy: 0.8919
-    Epoch 147/300
-    74/74 [==============================] - 0s 119us/sample - loss: 0.0294 - accuracy: 0.8919
-    Epoch 148/300
-    74/74 [==============================] - 0s 130us/sample - loss: 0.0284 - accuracy: 0.8919
-    Epoch 149/300
-    74/74 [==============================] - 0s 120us/sample - loss: 0.0281 - accuracy: 0.8919
-    Epoch 150/300
-    74/74 [==============================] - 0s 125us/sample - loss: 0.0313 - accuracy: 0.8919
-    Epoch 151/300
-    74/74 [==============================] - 0s 126us/sample - loss: 0.0292 - accuracy: 0.8919
-    Epoch 152/300
-    74/74 [==============================] - ETA: 0s - loss: 0.0309 - accuracy: 0.80 - 0s 115us/sample - loss: 0.0264 - accuracy: 0.8919
-    Epoch 153/300
-    74/74 [==============================] - 0s 134us/sample - loss: 0.0300 - accuracy: 0.8919
-    Epoch 154/300
-    74/74 [==============================] - 0s 127us/sample - loss: 0.0276 - accuracy: 0.8919
-    Epoch 155/300
-    74/74 [==============================] - 0s 121us/sample - loss: 0.0270 - accuracy: 0.8919
-    Epoch 156/300
-    74/74 [==============================] - 0s 126us/sample - loss: 0.0329 - accuracy: 0.8919
-    Epoch 157/300
-    74/74 [==============================] - 0s 129us/sample - loss: 0.0337 - accuracy: 0.8919
-    Epoch 158/300
-    74/74 [==============================] - 0s 118us/sample - loss: 0.0289 - accuracy: 0.8919
-    Epoch 159/300
-    74/74 [==============================] - 0s 119us/sample - loss: 0.0318 - accuracy: 0.8919
-    Epoch 160/300
-    74/74 [==============================] - 0s 120us/sample - loss: 0.0248 - accuracy: 0.8919
-    Epoch 161/300
-    74/74 [==============================] - 0s 128us/sample - loss: 0.0293 - accuracy: 0.8919
-    Epoch 162/300
-    74/74 [==============================] - 0s 126us/sample - loss: 0.0261 - accuracy: 0.8919
-    Epoch 163/300
-    74/74 [==============================] - 0s 119us/sample - loss: 0.0298 - accuracy: 0.8919
-    Epoch 164/300
-    74/74 [==============================] - 0s 126us/sample - loss: 0.0330 - accuracy: 0.8919
-    Epoch 165/300
-    74/74 [==============================] - 0s 130us/sample - loss: 0.0296 - accuracy: 0.8919
-    Epoch 166/300
-    74/74 [==============================] - 0s 130us/sample - loss: 0.0282 - accuracy: 0.8919
-    Epoch 167/300
-    74/74 [==============================] - 0s 125us/sample - loss: 0.0272 - accuracy: 0.8919
-    Epoch 168/300
-    74/74 [==============================] - 0s 132us/sample - loss: 0.0337 - accuracy: 0.8919
-    Epoch 169/300
-    74/74 [==============================] - 0s 118us/sample - loss: 0.0350 - accuracy: 0.8919
-    Epoch 170/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0339 - accuracy: 0.8919
-    Epoch 171/300
-    74/74 [==============================] - 0s 122us/sample - loss: 0.0260 - accuracy: 0.8919
-    Epoch 172/300
-    74/74 [==============================] - 0s 125us/sample - loss: 0.0299 - accuracy: 0.8919
-    Epoch 173/300
-    74/74 [==============================] - 0s 125us/sample - loss: 0.0341 - accuracy: 0.8919
-    Epoch 174/300
-    74/74 [==============================] - 0s 125us/sample - loss: 0.0308 - accuracy: 0.8919
-    Epoch 175/300
-    74/74 [==============================] - 0s 125us/sample - loss: 0.0268 - accuracy: 0.8919
-    Epoch 176/300
-    74/74 [==============================] - 0s 126us/sample - loss: 0.0303 - accuracy: 0.8919
-    Epoch 177/300
-    74/74 [==============================] - 0s 118us/sample - loss: 0.0279 - accuracy: 0.8919
-    Epoch 178/300
-    74/74 [==============================] - 0s 127us/sample - loss: 0.0308 - accuracy: 0.8919
-    Epoch 179/300
-    74/74 [==============================] - 0s 127us/sample - loss: 0.0298 - accuracy: 0.8919
-    Epoch 180/300
-    74/74 [==============================] - 0s 119us/sample - loss: 0.0282 - accuracy: 0.8919
-    Epoch 181/300
-    74/74 [==============================] - 0s 129us/sample - loss: 0.0322 - accuracy: 0.8919
-    Epoch 182/300
-    74/74 [==============================] - 0s 123us/sample - loss: 0.0268 - accuracy: 0.8919
-    Epoch 183/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0267 - accuracy: 0.8919
-    Epoch 184/300
-    74/74 [==============================] - 0s 128us/sample - loss: 0.0300 - accuracy: 0.8919
-    Epoch 185/300
-    74/74 [==============================] - 0s 123us/sample - loss: 0.0289 - accuracy: 0.8919
-    Epoch 186/300
-    74/74 [==============================] - 0s 130us/sample - loss: 0.0296 - accuracy: 0.8919
-    Epoch 187/300
-    74/74 [==============================] - 0s 127us/sample - loss: 0.0283 - accuracy: 0.8919
-    Epoch 188/300
-    74/74 [==============================] - 0s 120us/sample - loss: 0.0298 - accuracy: 0.8919
-    Epoch 189/300
-    74/74 [==============================] - ETA: 0s - loss: 0.0218 - accuracy: 0.86 - 0s 126us/sample - loss: 0.0260 - accuracy: 0.8919
-    Epoch 190/300
-    74/74 [==============================] - 0s 128us/sample - loss: 0.0274 - accuracy: 0.8919
-    Epoch 191/300
-    74/74 [==============================] - 0s 122us/sample - loss: 0.0280 - accuracy: 0.8919
-    Epoch 192/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0258 - accuracy: 0.8919
-    Epoch 193/300
-    74/74 [==============================] - ETA: 0s - loss: 0.0083 - accuracy: 0.93 - 0s 121us/sample - loss: 0.0284 - accuracy: 0.8919
-    Epoch 194/300
-    74/74 [==============================] - 0s 130us/sample - loss: 0.0300 - accuracy: 0.8919
-    Epoch 195/300
-    74/74 [==============================] - 0s 123us/sample - loss: 0.0269 - accuracy: 0.8919
-    Epoch 196/300
-    74/74 [==============================] - 0s 120us/sample - loss: 0.0269 - accuracy: 0.8919
-    Epoch 197/300
-    74/74 [==============================] - 0s 137us/sample - loss: 0.0308 - accuracy: 0.8919
-    Epoch 198/300
-    74/74 [==============================] - 0s 127us/sample - loss: 0.0243 - accuracy: 0.8919
-    Epoch 199/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0280 - accuracy: 0.8919
-    Epoch 200/300
-    74/74 [==============================] - 0s 130us/sample - loss: 0.0269 - accuracy: 0.9054
-    Epoch 201/300
-    74/74 [==============================] - 0s 125us/sample - loss: 0.0312 - accuracy: 0.8919
-    Epoch 202/300
-    74/74 [==============================] - 0s 122us/sample - loss: 0.0324 - accuracy: 0.8919
-    Epoch 203/300
-    74/74 [==============================] - 0s 125us/sample - loss: 0.0298 - accuracy: 0.8919
-    Epoch 204/300
-    74/74 [==============================] - 0s 125us/sample - loss: 0.0314 - accuracy: 0.8919
-    Epoch 205/300
-    74/74 [==============================] - 0s 119us/sample - loss: 0.0286 - accuracy: 0.8919
-    Epoch 206/300
-    74/74 [==============================] - 0s 132us/sample - loss: 0.0298 - accuracy: 0.8919
-    Epoch 207/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0320 - accuracy: 0.8919
-    Epoch 208/300
-    74/74 [==============================] - 0s 123us/sample - loss: 0.0360 - accuracy: 0.8919
-    Epoch 209/300
-    74/74 [==============================] - 0s 126us/sample - loss: 0.0308 - accuracy: 0.8919
-    Epoch 210/300
-    74/74 [==============================] - 0s 120us/sample - loss: 0.0280 - accuracy: 0.8919
-    Epoch 211/300
-    74/74 [==============================] - 0s 121us/sample - loss: 0.0342 - accuracy: 0.8919
-    Epoch 212/300
-    74/74 [==============================] - 0s 126us/sample - loss: 0.0311 - accuracy: 0.8919
-    Epoch 213/300
-    74/74 [==============================] - 0s 125us/sample - loss: 0.0269 - accuracy: 0.8919
-    Epoch 214/300
-    74/74 [==============================] - 0s 129us/sample - loss: 0.0285 - accuracy: 0.8919
-    Epoch 215/300
-    74/74 [==============================] - 0s 129us/sample - loss: 0.0290 - accuracy: 0.8919
-    Epoch 216/300
-    74/74 [==============================] - 0s 123us/sample - loss: 0.0260 - accuracy: 0.8919
-    Epoch 217/300
-    74/74 [==============================] - 0s 125us/sample - loss: 0.0283 - accuracy: 0.8919
-    Epoch 218/300
-    74/74 [==============================] - 0s 121us/sample - loss: 0.0307 - accuracy: 0.8919
-    Epoch 219/300
-    74/74 [==============================] - 0s 123us/sample - loss: 0.0293 - accuracy: 0.8919
-    Epoch 220/300
-    74/74 [==============================] - 0s 135us/sample - loss: 0.0269 - accuracy: 0.8919
-    Epoch 221/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0306 - accuracy: 0.8919
-    Epoch 222/300
-    74/74 [==============================] - 0s 121us/sample - loss: 0.0356 - accuracy: 0.8919
-    Epoch 223/300
-    74/74 [==============================] - 0s 125us/sample - loss: 0.0251 - accuracy: 0.8919
-    Epoch 224/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0247 - accuracy: 0.8919
-    Epoch 225/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0276 - accuracy: 0.8919
-    Epoch 226/300
-    74/74 [==============================] - 0s 130us/sample - loss: 0.0312 - accuracy: 0.8919
-    Epoch 227/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0299 - accuracy: 0.8919
-    Epoch 228/300
-    74/74 [==============================] - 0s 127us/sample - loss: 0.0282 - accuracy: 0.8919
-    Epoch 229/300
-    74/74 [==============================] - 0s 121us/sample - loss: 0.0289 - accuracy: 0.8919
-    Epoch 230/300
-    74/74 [==============================] - 0s 126us/sample - loss: 0.0291 - accuracy: 0.8919
-    Epoch 231/300
-    74/74 [==============================] - 0s 127us/sample - loss: 0.0266 - accuracy: 0.8919
-    Epoch 232/300
-    74/74 [==============================] - 0s 129us/sample - loss: 0.0269 - accuracy: 0.8919
-    Epoch 233/300
-    74/74 [==============================] - 0s 150us/sample - loss: 0.0259 - accuracy: 0.8919
-    Epoch 234/300
-    74/74 [==============================] - 0s 136us/sample - loss: 0.0308 - accuracy: 0.8919
-    Epoch 235/300
-    74/74 [==============================] - 0s 185us/sample - loss: 0.0306 - accuracy: 0.8919
-    Epoch 236/300
-    74/74 [==============================] - 0s 142us/sample - loss: 0.0309 - accuracy: 0.8919
-    Epoch 237/300
-    74/74 [==============================] - 0s 142us/sample - loss: 0.0306 - accuracy: 0.8919
-    Epoch 238/300
-    74/74 [==============================] - 0s 128us/sample - loss: 0.0299 - accuracy: 0.8919
-    Epoch 239/300
-    74/74 [==============================] - 0s 132us/sample - loss: 0.0265 - accuracy: 0.8919
-    Epoch 240/300
-    74/74 [==============================] - 0s 123us/sample - loss: 0.0300 - accuracy: 0.8919
-    Epoch 241/300
-    74/74 [==============================] - 0s 135us/sample - loss: 0.0280 - accuracy: 0.8919
-    Epoch 242/300
-    74/74 [==============================] - 0s 130us/sample - loss: 0.0277 - accuracy: 0.8919
-    Epoch 243/300
-    74/74 [==============================] - ETA: 0s - loss: 0.0272 - accuracy: 0.86 - 0s 120us/sample - loss: 0.0327 - accuracy: 0.8919
-    Epoch 244/300
-    74/74 [==============================] - 0s 126us/sample - loss: 0.0320 - accuracy: 0.8919
-    Epoch 245/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0308 - accuracy: 0.8919
-    Epoch 246/300
-    74/74 [==============================] - 0s 121us/sample - loss: 0.0283 - accuracy: 0.8919
-    Epoch 247/300
-    74/74 [==============================] - 0s 127us/sample - loss: 0.0294 - accuracy: 0.8919
-    Epoch 248/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0271 - accuracy: 0.8919
-    Epoch 249/300
-    74/74 [==============================] - 0s 125us/sample - loss: 0.0289 - accuracy: 0.8919
-    Epoch 250/300
-    74/74 [==============================] - 0s 129us/sample - loss: 0.0293 - accuracy: 0.8919
-    Epoch 251/300
-    74/74 [==============================] - 0s 121us/sample - loss: 0.0282 - accuracy: 0.8919
-    Epoch 252/300
-    74/74 [==============================] - 0s 133us/sample - loss: 0.0281 - accuracy: 0.8919
-    Epoch 253/300
-    74/74 [==============================] - 0s 125us/sample - loss: 0.0271 - accuracy: 0.8919
-    Epoch 254/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0275 - accuracy: 0.8919
-    Epoch 255/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0294 - accuracy: 0.8919
-    Epoch 256/300
-    74/74 [==============================] - 0s 121us/sample - loss: 0.0303 - accuracy: 0.8919
-    Epoch 257/300
-    74/74 [==============================] - 0s 119us/sample - loss: 0.0244 - accuracy: 0.8919
-    Epoch 258/300
-    74/74 [==============================] - 0s 130us/sample - loss: 0.0305 - accuracy: 0.8919
-    Epoch 259/300
-    74/74 [==============================] - 0s 123us/sample - loss: 0.0296 - accuracy: 0.8919
-    Epoch 260/300
-    74/74 [==============================] - 0s 126us/sample - loss: 0.0294 - accuracy: 0.8919
-    Epoch 261/300
-    74/74 [==============================] - 0s 121us/sample - loss: 0.0273 - accuracy: 0.8919
-    Epoch 262/300
-    74/74 [==============================] - 0s 120us/sample - loss: 0.0314 - accuracy: 0.8919
-    Epoch 263/300
-    74/74 [==============================] - 0s 129us/sample - loss: 0.0335 - accuracy: 0.8919
-    Epoch 264/300
-    74/74 [==============================] - 0s 123us/sample - loss: 0.0281 - accuracy: 0.8919
-    Epoch 265/300
-    74/74 [==============================] - 0s 128us/sample - loss: 0.0293 - accuracy: 0.8919
-    Epoch 266/300
-    74/74 [==============================] - ETA: 0s - loss: 0.0364 - accuracy: 0.86 - 0s 123us/sample - loss: 0.0258 - accuracy: 0.8919
-    Epoch 267/300
-    74/74 [==============================] - 0s 121us/sample - loss: 0.0321 - accuracy: 0.8919
-    Epoch 268/300
-    74/74 [==============================] - 0s 122us/sample - loss: 0.0280 - accuracy: 0.8919
-    Epoch 269/300
-    74/74 [==============================] - 0s 128us/sample - loss: 0.0319 - accuracy: 0.8919
-    Epoch 270/300
-    74/74 [==============================] - 0s 126us/sample - loss: 0.0252 - accuracy: 0.8919
-    Epoch 271/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0268 - accuracy: 0.8919
-    Epoch 272/300
-    74/74 [==============================] - 0s 141us/sample - loss: 0.0303 - accuracy: 0.8919
-    Epoch 273/300
-    74/74 [==============================] - 0s 123us/sample - loss: 0.0264 - accuracy: 0.8919
-    Epoch 274/300
-    74/74 [==============================] - 0s 121us/sample - loss: 0.0273 - accuracy: 0.8919
-    Epoch 275/300
-    74/74 [==============================] - 0s 121us/sample - loss: 0.0335 - accuracy: 0.8919
-    Epoch 276/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0312 - accuracy: 0.8919
-    Epoch 277/300
-    74/74 [==============================] - 0s 142us/sample - loss: 0.0307 - accuracy: 0.8919
-    Epoch 278/300
-    74/74 [==============================] - 0s 123us/sample - loss: 0.0271 - accuracy: 0.8919
-    Epoch 279/300
-    74/74 [==============================] - 0s 121us/sample - loss: 0.0254 - accuracy: 0.8919
-    Epoch 280/300
-    74/74 [==============================] - 0s 126us/sample - loss: 0.0267 - accuracy: 0.8919
-    Epoch 281/300
-    74/74 [==============================] - 0s 122us/sample - loss: 0.0265 - accuracy: 0.8919
-    Epoch 282/300
-    74/74 [==============================] - 0s 130us/sample - loss: 0.0293 - accuracy: 0.8919
-    Epoch 283/300
-    74/74 [==============================] - 0s 127us/sample - loss: 0.0322 - accuracy: 0.8919
-    Epoch 284/300
-    74/74 [==============================] - 0s 122us/sample - loss: 0.0256 - accuracy: 0.8919
-    Epoch 285/300
-    74/74 [==============================] - 0s 123us/sample - loss: 0.0296 - accuracy: 0.8919
-    Epoch 286/300
-    74/74 [==============================] - 0s 123us/sample - loss: 0.0291 - accuracy: 0.8919
-    Epoch 287/300
-    74/74 [==============================] - 0s 118us/sample - loss: 0.0297 - accuracy: 0.8919
-    Epoch 288/300
-    74/74 [==============================] - 0s 127us/sample - loss: 0.0345 - accuracy: 0.8919
-    Epoch 289/300
-    74/74 [==============================] - 0s 123us/sample - loss: 0.0270 - accuracy: 0.8919
-    Epoch 290/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0287 - accuracy: 0.8919
-    Epoch 291/300
-    74/74 [==============================] - ETA: 0s - loss: 0.0515 - accuracy: 0.73 - 0s 129us/sample - loss: 0.0314 - accuracy: 0.8919
-    Epoch 292/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0285 - accuracy: 0.8919
-    Epoch 293/300
-    74/74 [==============================] - 0s 128us/sample - loss: 0.0303 - accuracy: 0.8919
-    Epoch 294/300
-    74/74 [==============================] - 0s 121us/sample - loss: 0.0291 - accuracy: 0.8919
-    Epoch 295/300
-    74/74 [==============================] - 0s 120us/sample - loss: 0.0298 - accuracy: 0.8919
-    Epoch 296/300
-    74/74 [==============================] - 0s 121us/sample - loss: 0.0287 - accuracy: 0.8919
-    Epoch 297/300
-    74/74 [==============================] - 0s 140us/sample - loss: 0.0298 - accuracy: 0.8919
-    Epoch 298/300
-    74/74 [==============================] - 0s 119us/sample - loss: 0.0290 - accuracy: 0.8919
-    Epoch 299/300
-    74/74 [==============================] - 0s 127us/sample - loss: 0.0302 - accuracy: 0.8919
+    74/74 [==============================] - 0s 120us/sample - loss: 0.1421 - accuracy: 0.5000
+    ...
+    74/74 [==============================] - 0s 118us/sample - loss: 0.0299 - accuracy: 0.8784
     Epoch 300/300
-    74/74 [==============================] - 0s 124us/sample - loss: 0.0310 - accuracy: 0.8919
-    Model: "sequential_14"
-    _________________________________________________________________
-    Layer (type)                 Output Shape              Param #   
-    =================================================================
-    dense_34 (Dense)             (None, 128)               4608      
-    _________________________________________________________________
-    activation_34 (Activation)   (None, 128)               0         
-    _________________________________________________________________
-    dropout_22 (Dropout)         (None, 128)               0         
-    _________________________________________________________________
-    dense_35 (Dense)             (None, 1)                 129       
-    _________________________________________________________________
-    activation_35 (Activation)   (None, 1)                 0         
-    =================================================================
-    Total params: 4,737
-    Trainable params: 4,737
-    Non-trainable params: 0
-    _________________________________________________________________
-    Train on 75 samples
-    Epoch 1/300
-    75/75 [==============================] - 0s 4ms/sample - loss: 0.1469 - accuracy: 0.4400
-    Epoch 2/300
-    75/75 [==============================] - 0s 125us/sample - loss: 0.1418 - accuracy: 0.4800
-    Epoch 3/300
-    75/75 [==============================] - 0s 113us/sample - loss: 0.1320 - accuracy: 0.6533
-    Epoch 4/300
-    75/75 [==============================] - 0s 120us/sample - loss: 0.1309 - accuracy: 0.6533
-    Epoch 5/300
-    75/75 [==============================] - 0s 107us/sample - loss: 0.1226 - accuracy: 0.7467
-    Epoch 6/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.1153 - accuracy: 0.7733
-    Epoch 7/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.1153 - accuracy: 0.7333
-    Epoch 8/300
-    75/75 [==============================] - 0s 107us/sample - loss: 0.1117 - accuracy: 0.8267
-    Epoch 9/300
-    75/75 [==============================] - 0s 106us/sample - loss: 0.1069 - accuracy: 0.8267
-    Epoch 10/300
-    75/75 [==============================] - 0s 108us/sample - loss: 0.0965 - accuracy: 0.8267
-    Epoch 11/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0983 - accuracy: 0.8000
-    Epoch 12/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.1007 - accuracy: 0.8133
-    Epoch 13/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.1000 - accuracy: 0.8133
-    Epoch 14/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0910 - accuracy: 0.8000
-    Epoch 15/300
-    75/75 [==============================] - 0s 105us/sample - loss: 0.0849 - accuracy: 0.8533
-    Epoch 16/300
-    75/75 [==============================] - 0s 111us/sample - loss: 0.0848 - accuracy: 0.8533
-    Epoch 17/300
-    75/75 [==============================] - 0s 107us/sample - loss: 0.0836 - accuracy: 0.8133
-    Epoch 18/300
-    75/75 [==============================] - 0s 107us/sample - loss: 0.0772 - accuracy: 0.8533
-    Epoch 19/300
-    75/75 [==============================] - 0s 107us/sample - loss: 0.0832 - accuracy: 0.8533
-    Epoch 20/300
-    75/75 [==============================] - 0s 108us/sample - loss: 0.0777 - accuracy: 0.8533
-    Epoch 21/300
-    75/75 [==============================] - 0s 111us/sample - loss: 0.0716 - accuracy: 0.8533
-    Epoch 22/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0711 - accuracy: 0.8533
-    Epoch 23/300
-    75/75 [==============================] - 0s 119us/sample - loss: 0.0730 - accuracy: 0.8533
-    Epoch 24/300
-    75/75 [==============================] - 0s 113us/sample - loss: 0.0715 - accuracy: 0.8533
-    Epoch 25/300
-    75/75 [==============================] - 0s 113us/sample - loss: 0.0703 - accuracy: 0.8533
-    Epoch 26/300
-    75/75 [==============================] - 0s 120us/sample - loss: 0.0724 - accuracy: 0.8533
-    Epoch 27/300
-    75/75 [==============================] - 0s 111us/sample - loss: 0.0633 - accuracy: 0.8400
-    Epoch 28/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0630 - accuracy: 0.8533
-    Epoch 29/300
-    75/75 [==============================] - 0s 108us/sample - loss: 0.0632 - accuracy: 0.8533
-    Epoch 30/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0665 - accuracy: 0.8533
-    Epoch 31/300
-    75/75 [==============================] - 0s 107us/sample - loss: 0.0635 - accuracy: 0.8533
-    Epoch 32/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.0539 - accuracy: 0.8533
-    Epoch 33/300
-    75/75 [==============================] - 0s 108us/sample - loss: 0.0621 - accuracy: 0.8533
-    Epoch 34/300
-    75/75 [==============================] - 0s 111us/sample - loss: 0.0615 - accuracy: 0.8533
-    Epoch 35/300
-    75/75 [==============================] - 0s 114us/sample - loss: 0.0580 - accuracy: 0.8533
-    Epoch 36/300
-    75/75 [==============================] - 0s 104us/sample - loss: 0.0578 - accuracy: 0.8667
-    Epoch 37/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0513 - accuracy: 0.8533
-    Epoch 38/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.0497 - accuracy: 0.8533
-    Epoch 39/300
-    75/75 [==============================] - 0s 114us/sample - loss: 0.0513 - accuracy: 0.8400
-    Epoch 40/300
-    75/75 [==============================] - 0s 108us/sample - loss: 0.0544 - accuracy: 0.8533
-    Epoch 41/300
-    75/75 [==============================] - 0s 108us/sample - loss: 0.0531 - accuracy: 0.8533
-    Epoch 42/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0544 - accuracy: 0.8533
-    Epoch 43/300
-    75/75 [==============================] - 0s 108us/sample - loss: 0.0508 - accuracy: 0.8533
-    Epoch 44/300
-    75/75 [==============================] - 0s 115us/sample - loss: 0.0519 - accuracy: 0.8533
-    Epoch 45/300
-    75/75 [==============================] - ETA: 0s - loss: 0.0583 - accuracy: 0.86 - 0s 113us/sample - loss: 0.0492 - accuracy: 0.8533
-    Epoch 46/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0501 - accuracy: 0.8533
-    Epoch 47/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0535 - accuracy: 0.8533
-    Epoch 48/300
-    75/75 [==============================] - 0s 105us/sample - loss: 0.0510 - accuracy: 0.8533
-    Epoch 49/300
-    75/75 [==============================] - 0s 115us/sample - loss: 0.0465 - accuracy: 0.8533
-    Epoch 50/300
-    75/75 [==============================] - 0s 107us/sample - loss: 0.0525 - accuracy: 0.8533
-    Epoch 51/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0498 - accuracy: 0.8533
-    Epoch 52/300
-    75/75 [==============================] - 0s 125us/sample - loss: 0.0471 - accuracy: 0.8533
-    Epoch 53/300
-    75/75 [==============================] - 0s 111us/sample - loss: 0.0505 - accuracy: 0.8533
-    Epoch 54/300
-    75/75 [==============================] - 0s 114us/sample - loss: 0.0447 - accuracy: 0.8533
-    Epoch 55/300
-    75/75 [==============================] - 0s 108us/sample - loss: 0.0471 - accuracy: 0.8533
-    Epoch 56/300
-    75/75 [==============================] - 0s 114us/sample - loss: 0.0477 - accuracy: 0.8533
-    Epoch 57/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.0448 - accuracy: 0.8533
-    Epoch 58/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0521 - accuracy: 0.8533
-    Epoch 59/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.0468 - accuracy: 0.8533
-    Epoch 60/300
-    75/75 [==============================] - 0s 106us/sample - loss: 0.0484 - accuracy: 0.8533
-    Epoch 61/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0429 - accuracy: 0.8533
-    Epoch 62/300
-    75/75 [==============================] - 0s 101us/sample - loss: 0.0457 - accuracy: 0.8667
-    Epoch 63/300
-    75/75 [==============================] - 0s 116us/sample - loss: 0.0435 - accuracy: 0.8533
-    Epoch 64/300
-    75/75 [==============================] - 0s 106us/sample - loss: 0.0454 - accuracy: 0.8533
-    Epoch 65/300
-    75/75 [==============================] - ETA: 0s - loss: 0.0505 - accuracy: 0.86 - 0s 111us/sample - loss: 0.0430 - accuracy: 0.8533
-    Epoch 66/300
-    75/75 [==============================] - 0s 113us/sample - loss: 0.0461 - accuracy: 0.8533
-    Epoch 67/300
-    75/75 [==============================] - 0s 107us/sample - loss: 0.0461 - accuracy: 0.8667
-    Epoch 68/300
-    75/75 [==============================] - 0s 126us/sample - loss: 0.0432 - accuracy: 0.8533
-    Epoch 69/300
-    75/75 [==============================] - 0s 106us/sample - loss: 0.0429 - accuracy: 0.8533
-    Epoch 70/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0392 - accuracy: 0.8533
-    Epoch 71/300
-    75/75 [==============================] - 0s 111us/sample - loss: 0.0398 - accuracy: 0.8533
-    Epoch 72/300
-    75/75 [==============================] - 0s 107us/sample - loss: 0.0427 - accuracy: 0.8533
-    Epoch 73/300
-    75/75 [==============================] - ETA: 0s - loss: 0.0392 - accuracy: 0.86 - 0s 112us/sample - loss: 0.0443 - accuracy: 0.8533
-    Epoch 74/300
-    75/75 [==============================] - 0s 105us/sample - loss: 0.0473 - accuracy: 0.8533
-    Epoch 75/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0483 - accuracy: 0.8533
-    Epoch 76/300
-    75/75 [==============================] - 0s 105us/sample - loss: 0.0430 - accuracy: 0.8533
-    Epoch 77/300
-    75/75 [==============================] - 0s 113us/sample - loss: 0.0395 - accuracy: 0.8533
-    Epoch 78/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0420 - accuracy: 0.8533
-    Epoch 79/300
-    75/75 [==============================] - 0s 106us/sample - loss: 0.0459 - accuracy: 0.8533
-    Epoch 80/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0353 - accuracy: 0.8533
-    Epoch 81/300
-    75/75 [==============================] - 0s 107us/sample - loss: 0.0414 - accuracy: 0.8533
-    Epoch 82/300
-    75/75 [==============================] - 0s 111us/sample - loss: 0.0386 - accuracy: 0.8533
-    Epoch 83/300
-    75/75 [==============================] - 0s 107us/sample - loss: 0.0430 - accuracy: 0.8533
-    Epoch 84/300
-    75/75 [==============================] - 0s 114us/sample - loss: 0.0380 - accuracy: 0.8533
-    Epoch 85/300
-    75/75 [==============================] - 0s 107us/sample - loss: 0.0420 - accuracy: 0.8667
-    Epoch 86/300
-    75/75 [==============================] - 0s 107us/sample - loss: 0.0411 - accuracy: 0.8533
-    Epoch 87/300
-    75/75 [==============================] - 0s 108us/sample - loss: 0.0402 - accuracy: 0.8533
-    Epoch 88/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0429 - accuracy: 0.8533
-    Epoch 89/300
-    75/75 [==============================] - 0s 120us/sample - loss: 0.0406 - accuracy: 0.8533
-    Epoch 90/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0457 - accuracy: 0.8533
-    Epoch 91/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0404 - accuracy: 0.8667
-    Epoch 92/300
-    75/75 [==============================] - 0s 111us/sample - loss: 0.0460 - accuracy: 0.8533
-    Epoch 93/300
-    75/75 [==============================] - 0s 105us/sample - loss: 0.0371 - accuracy: 0.8533
-    Epoch 94/300
-    75/75 [==============================] - 0s 113us/sample - loss: 0.0398 - accuracy: 0.8533
-    Epoch 95/300
-    75/75 [==============================] - 0s 116us/sample - loss: 0.0460 - accuracy: 0.8533
-    Epoch 96/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.0404 - accuracy: 0.8533
-    Epoch 97/300
-    75/75 [==============================] - ETA: 0s - loss: 0.0082 - accuracy: 0.93 - 0s 118us/sample - loss: 0.0384 - accuracy: 0.8533
-    Epoch 98/300
-    75/75 [==============================] - 0s 116us/sample - loss: 0.0383 - accuracy: 0.8800
-    Epoch 99/300
-    75/75 [==============================] - ETA: 0s - loss: 0.0358 - accuracy: 0.80 - 0s 113us/sample - loss: 0.0409 - accuracy: 0.8533
-    Epoch 100/300
-    75/75 [==============================] - 0s 111us/sample - loss: 0.0447 - accuracy: 0.8533
-    Epoch 101/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0363 - accuracy: 0.8533
-    Epoch 102/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.0384 - accuracy: 0.8533
-    Epoch 103/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0366 - accuracy: 0.8533
-    Epoch 104/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.0469 - accuracy: 0.8533
-    Epoch 105/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0407 - accuracy: 0.8533
-    Epoch 106/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.0459 - accuracy: 0.8533
-    Epoch 107/300
-    75/75 [==============================] - 0s 107us/sample - loss: 0.0417 - accuracy: 0.8667
-    Epoch 108/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0416 - accuracy: 0.8533
-    Epoch 109/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.0416 - accuracy: 0.8533
-    Epoch 110/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0401 - accuracy: 0.8533
-    Epoch 111/300
-    75/75 [==============================] - 0s 114us/sample - loss: 0.0428 - accuracy: 0.8533
-    Epoch 112/300
-    75/75 [==============================] - 0s 107us/sample - loss: 0.0399 - accuracy: 0.8533
-    Epoch 113/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0432 - accuracy: 0.8533
-    Epoch 114/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.0424 - accuracy: 0.8533
-    Epoch 115/300
-    75/75 [==============================] - 0s 113us/sample - loss: 0.0397 - accuracy: 0.8533
-    Epoch 116/300
-    75/75 [==============================] - 0s 115us/sample - loss: 0.0448 - accuracy: 0.8533
-    Epoch 117/300
-    75/75 [==============================] - 0s 106us/sample - loss: 0.0385 - accuracy: 0.8533
-    Epoch 118/300
-    75/75 [==============================] - 0s 108us/sample - loss: 0.0398 - accuracy: 0.8400
-    Epoch 119/300
-    75/75 [==============================] - 0s 106us/sample - loss: 0.0365 - accuracy: 0.8533
-    Epoch 120/300
-    75/75 [==============================] - 0s 114us/sample - loss: 0.0394 - accuracy: 0.8533
-    Epoch 121/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0422 - accuracy: 0.8533
-    Epoch 122/300
-    75/75 [==============================] - 0s 114us/sample - loss: 0.0375 - accuracy: 0.8533
-    Epoch 123/300
-    75/75 [==============================] - 0s 116us/sample - loss: 0.0432 - accuracy: 0.8533
-    Epoch 124/300
-    75/75 [==============================] - 0s 108us/sample - loss: 0.0401 - accuracy: 0.8533
-    Epoch 125/300
-    75/75 [==============================] - 0s 115us/sample - loss: 0.0428 - accuracy: 0.8533
-    Epoch 126/300
-    75/75 [==============================] - 0s 108us/sample - loss: 0.0382 - accuracy: 0.8533
-    Epoch 127/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.0458 - accuracy: 0.8533
-    Epoch 128/300
-    75/75 [==============================] - 0s 111us/sample - loss: 0.0391 - accuracy: 0.8533
-    Epoch 129/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.0393 - accuracy: 0.8533
-    Epoch 130/300
-    75/75 [==============================] - 0s 111us/sample - loss: 0.0388 - accuracy: 0.8533
-    Epoch 131/300
-    75/75 [==============================] - 0s 105us/sample - loss: 0.0349 - accuracy: 0.8533
-    Epoch 132/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0389 - accuracy: 0.8533
-    Epoch 133/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0388 - accuracy: 0.8533
-    Epoch 134/300
-    75/75 [==============================] - 0s 111us/sample - loss: 0.0388 - accuracy: 0.8533
-    Epoch 135/300
-    75/75 [==============================] - 0s 106us/sample - loss: 0.0401 - accuracy: 0.8533
-    Epoch 136/300
-    75/75 [==============================] - 0s 117us/sample - loss: 0.0352 - accuracy: 0.8533
-    Epoch 137/300
-    75/75 [==============================] - 0s 116us/sample - loss: 0.0379 - accuracy: 0.8533
-    Epoch 138/300
-    75/75 [==============================] - 0s 104us/sample - loss: 0.0427 - accuracy: 0.8533
-    Epoch 139/300
-    75/75 [==============================] - 0s 114us/sample - loss: 0.0415 - accuracy: 0.8533
-    Epoch 140/300
-    75/75 [==============================] - 0s 111us/sample - loss: 0.0362 - accuracy: 0.8533
-    Epoch 141/300
-    75/75 [==============================] - ETA: 0s - loss: 0.0436 - accuracy: 0.93 - 0s 111us/sample - loss: 0.0397 - accuracy: 0.8533
-    Epoch 142/300
-    75/75 [==============================] - 0s 117us/sample - loss: 0.0377 - accuracy: 0.8533
-    Epoch 143/300
-    75/75 [==============================] - 0s 106us/sample - loss: 0.0393 - accuracy: 0.8533
-    Epoch 144/300
-    75/75 [==============================] - 0s 116us/sample - loss: 0.0389 - accuracy: 0.8533
-    Epoch 145/300
-    75/75 [==============================] - 0s 116us/sample - loss: 0.0358 - accuracy: 0.8533
-    Epoch 146/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0394 - accuracy: 0.8533
-    Epoch 147/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0407 - accuracy: 0.8533
-    Epoch 148/300
-    75/75 [==============================] - 0s 108us/sample - loss: 0.0354 - accuracy: 0.8533
-    Epoch 149/300
-    75/75 [==============================] - 0s 114us/sample - loss: 0.0344 - accuracy: 0.8533
-    Epoch 150/300
-    75/75 [==============================] - 0s 106us/sample - loss: 0.0364 - accuracy: 0.8533
-    Epoch 151/300
-    75/75 [==============================] - 0s 117us/sample - loss: 0.0396 - accuracy: 0.8533
-    Epoch 152/300
-    75/75 [==============================] - 0s 102us/sample - loss: 0.0358 - accuracy: 0.8533
-    Epoch 153/300
-    75/75 [==============================] - 0s 111us/sample - loss: 0.0362 - accuracy: 0.8533
-    Epoch 154/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.0371 - accuracy: 0.8533
-    Epoch 155/300
-    75/75 [==============================] - 0s 107us/sample - loss: 0.0408 - accuracy: 0.8533
-    Epoch 156/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0373 - accuracy: 0.8533
-    Epoch 157/300
-    75/75 [==============================] - 0s 114us/sample - loss: 0.0417 - accuracy: 0.8533
-    Epoch 158/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.0387 - accuracy: 0.8533
-    Epoch 159/300
-    75/75 [==============================] - 0s 106us/sample - loss: 0.0447 - accuracy: 0.8533
-    Epoch 160/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0387 - accuracy: 0.8533
-    Epoch 161/300
-    75/75 [==============================] - 0s 106us/sample - loss: 0.0398 - accuracy: 0.8533
-    Epoch 162/300
-    75/75 [==============================] - 0s 107us/sample - loss: 0.0343 - accuracy: 0.8533
-    Epoch 163/300
-    75/75 [==============================] - 0s 111us/sample - loss: 0.0414 - accuracy: 0.8533
-    Epoch 164/300
-    75/75 [==============================] - 0s 108us/sample - loss: 0.0365 - accuracy: 0.8533
-    Epoch 165/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.0427 - accuracy: 0.8533
-    Epoch 166/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0388 - accuracy: 0.8533
-    Epoch 167/300
-    75/75 [==============================] - 0s 111us/sample - loss: 0.0398 - accuracy: 0.8533
-    Epoch 168/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0389 - accuracy: 0.8533
-    Epoch 169/300
-    75/75 [==============================] - 0s 106us/sample - loss: 0.0394 - accuracy: 0.8533
-    Epoch 170/300
-    75/75 [==============================] - 0s 114us/sample - loss: 0.0409 - accuracy: 0.8533
-    Epoch 171/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0382 - accuracy: 0.8533
-    Epoch 172/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.0399 - accuracy: 0.8533
-    Epoch 173/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0378 - accuracy: 0.8533
-    Epoch 174/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.0369 - accuracy: 0.8533
-    Epoch 175/300
-    75/75 [==============================] - 0s 111us/sample - loss: 0.0401 - accuracy: 0.8533
-    Epoch 176/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0370 - accuracy: 0.8667
-    Epoch 177/300
-    75/75 [==============================] - 0s 111us/sample - loss: 0.0371 - accuracy: 0.8533
-    Epoch 178/300
-    75/75 [==============================] - 0s 108us/sample - loss: 0.0351 - accuracy: 0.8533
-    Epoch 179/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0401 - accuracy: 0.8533
-    Epoch 180/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0387 - accuracy: 0.8533
-    Epoch 181/300
-    75/75 [==============================] - 0s 107us/sample - loss: 0.0366 - accuracy: 0.8533
-    Epoch 182/300
-    75/75 [==============================] - 0s 113us/sample - loss: 0.0397 - accuracy: 0.8533
-    Epoch 183/300
-    75/75 [==============================] - 0s 111us/sample - loss: 0.0377 - accuracy: 0.8533
-    Epoch 184/300
-    75/75 [==============================] - 0s 117us/sample - loss: 0.0365 - accuracy: 0.8533
-    Epoch 185/300
-    75/75 [==============================] - 0s 116us/sample - loss: 0.0412 - accuracy: 0.8533
-    Epoch 186/300
-    75/75 [==============================] - 0s 111us/sample - loss: 0.0408 - accuracy: 0.8533
-    Epoch 187/300
-    75/75 [==============================] - 0s 114us/sample - loss: 0.0374 - accuracy: 0.8533
-    Epoch 188/300
-    75/75 [==============================] - 0s 104us/sample - loss: 0.0390 - accuracy: 0.8667
-    Epoch 189/300
-    75/75 [==============================] - ETA: 0s - loss: 0.0380 - accuracy: 0.93 - 0s 112us/sample - loss: 0.0394 - accuracy: 0.8533
-    Epoch 190/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0379 - accuracy: 0.8533
-    Epoch 191/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0383 - accuracy: 0.8533
-    Epoch 192/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0376 - accuracy: 0.8533
-    Epoch 193/300
-    75/75 [==============================] - 0s 107us/sample - loss: 0.0388 - accuracy: 0.8533
-    Epoch 194/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0373 - accuracy: 0.8533
-    Epoch 195/300
-    75/75 [==============================] - 0s 104us/sample - loss: 0.0373 - accuracy: 0.8533
-    Epoch 196/300
-    75/75 [==============================] - 0s 113us/sample - loss: 0.0354 - accuracy: 0.8533
-    Epoch 197/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.0357 - accuracy: 0.8533
-    Epoch 198/300
-    75/75 [==============================] - 0s 114us/sample - loss: 0.0434 - accuracy: 0.8533
-    Epoch 199/300
-    75/75 [==============================] - 0s 113us/sample - loss: 0.0369 - accuracy: 0.8533
-    Epoch 200/300
-    75/75 [==============================] - 0s 106us/sample - loss: 0.0339 - accuracy: 0.8533
-    Epoch 201/300
-    75/75 [==============================] - 0s 108us/sample - loss: 0.0363 - accuracy: 0.8533
-    Epoch 202/300
-    75/75 [==============================] - 0s 107us/sample - loss: 0.0383 - accuracy: 0.8533
-    Epoch 203/300
-    75/75 [==============================] - 0s 114us/sample - loss: 0.0346 - accuracy: 0.8533
-    Epoch 204/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0360 - accuracy: 0.8533
-    Epoch 205/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0367 - accuracy: 0.8533
-    Epoch 206/300
-    75/75 [==============================] - 0s 115us/sample - loss: 0.0396 - accuracy: 0.8533
-    Epoch 207/300
-    75/75 [==============================] - 0s 107us/sample - loss: 0.0358 - accuracy: 0.8533
-    Epoch 208/300
-    75/75 [==============================] - 0s 121us/sample - loss: 0.0409 - accuracy: 0.8533
-    Epoch 209/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0427 - accuracy: 0.8533
-    Epoch 210/300
-    75/75 [==============================] - 0s 115us/sample - loss: 0.0396 - accuracy: 0.8533
-    Epoch 211/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0381 - accuracy: 0.8667
-    Epoch 212/300
-    75/75 [==============================] - 0s 108us/sample - loss: 0.0415 - accuracy: 0.8533
-    Epoch 213/300
-    75/75 [==============================] - 0s 111us/sample - loss: 0.0371 - accuracy: 0.8533
-    Epoch 214/300
-    75/75 [==============================] - 0s 107us/sample - loss: 0.0383 - accuracy: 0.8533
-    Epoch 215/300
-    75/75 [==============================] - 0s 114us/sample - loss: 0.0419 - accuracy: 0.8533
-    Epoch 216/300
-    75/75 [==============================] - 0s 113us/sample - loss: 0.0370 - accuracy: 0.8533
-    Epoch 217/300
-    75/75 [==============================] - 0s 119us/sample - loss: 0.0328 - accuracy: 0.8533
-    Epoch 218/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0357 - accuracy: 0.8533
-    Epoch 219/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.0347 - accuracy: 0.8533
-    Epoch 220/300
-    75/75 [==============================] - 0s 114us/sample - loss: 0.0365 - accuracy: 0.8533
-    Epoch 221/300
-    75/75 [==============================] - 0s 108us/sample - loss: 0.0388 - accuracy: 0.8533
-    Epoch 222/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0378 - accuracy: 0.8533
-    Epoch 223/300
-    75/75 [==============================] - 0s 111us/sample - loss: 0.0388 - accuracy: 0.8533
-    Epoch 224/300
-    75/75 [==============================] - 0s 111us/sample - loss: 0.0353 - accuracy: 0.8533
-    Epoch 225/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0394 - accuracy: 0.8533
-    Epoch 226/300
-    75/75 [==============================] - 0s 107us/sample - loss: 0.0377 - accuracy: 0.8533
-    Epoch 227/300
-    75/75 [==============================] - ETA: 0s - loss: 0.0099 - accuracy: 0.93 - 0s 114us/sample - loss: 0.0383 - accuracy: 0.8533
-    Epoch 228/300
-    75/75 [==============================] - 0s 114us/sample - loss: 0.0407 - accuracy: 0.8533
-    Epoch 229/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0414 - accuracy: 0.8533
-    Epoch 230/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0363 - accuracy: 0.8533
-    Epoch 231/300
-    75/75 [==============================] - 0s 111us/sample - loss: 0.0399 - accuracy: 0.8533
-    Epoch 232/300
-    75/75 [==============================] - 0s 111us/sample - loss: 0.0403 - accuracy: 0.8533
-    Epoch 233/300
-    75/75 [==============================] - 0s 104us/sample - loss: 0.0390 - accuracy: 0.8533
-    Epoch 234/300
-    75/75 [==============================] - 0s 118us/sample - loss: 0.0387 - accuracy: 0.8533
-    Epoch 235/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0421 - accuracy: 0.8533
-    Epoch 236/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.0370 - accuracy: 0.8533
-    Epoch 237/300
-    75/75 [==============================] - 0s 111us/sample - loss: 0.0400 - accuracy: 0.8533
-    Epoch 238/300
-    75/75 [==============================] - 0s 106us/sample - loss: 0.0360 - accuracy: 0.8533
-    Epoch 239/300
-    75/75 [==============================] - 0s 115us/sample - loss: 0.0406 - accuracy: 0.8533
-    Epoch 240/300
-    75/75 [==============================] - 0s 108us/sample - loss: 0.0393 - accuracy: 0.8533
-    Epoch 241/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0392 - accuracy: 0.8533
-    Epoch 242/300
-    75/75 [==============================] - 0s 113us/sample - loss: 0.0361 - accuracy: 0.8533
-    Epoch 243/300
-    75/75 [==============================] - 0s 108us/sample - loss: 0.0372 - accuracy: 0.8533
-    Epoch 244/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.0374 - accuracy: 0.8533
-    Epoch 245/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0411 - accuracy: 0.8533
-    Epoch 246/300
-    75/75 [==============================] - 0s 118us/sample - loss: 0.0361 - accuracy: 0.8533
-    Epoch 247/300
-    75/75 [==============================] - 0s 118us/sample - loss: 0.0358 - accuracy: 0.8533
-    Epoch 248/300
-    75/75 [==============================] - 0s 122us/sample - loss: 0.0376 - accuracy: 0.8533
-    Epoch 249/300
-    75/75 [==============================] - 0s 118us/sample - loss: 0.0350 - accuracy: 0.8533
-    Epoch 250/300
-    75/75 [==============================] - 0s 113us/sample - loss: 0.0382 - accuracy: 0.8533
-    Epoch 251/300
-    75/75 [==============================] - 0s 107us/sample - loss: 0.0345 - accuracy: 0.8533
-    Epoch 252/300
-    75/75 [==============================] - 0s 111us/sample - loss: 0.0369 - accuracy: 0.8533
-    Epoch 253/300
-    75/75 [==============================] - 0s 114us/sample - loss: 0.0374 - accuracy: 0.8533
-    Epoch 254/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.0388 - accuracy: 0.8533
-    Epoch 255/300
-    75/75 [==============================] - 0s 106us/sample - loss: 0.0390 - accuracy: 0.8533
-    Epoch 256/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.0410 - accuracy: 0.8533
-    Epoch 257/300
-    75/75 [==============================] - 0s 107us/sample - loss: 0.0377 - accuracy: 0.8533
-    Epoch 258/300
-    75/75 [==============================] - 0s 108us/sample - loss: 0.0366 - accuracy: 0.8533
-    Epoch 259/300
-    75/75 [==============================] - 0s 111us/sample - loss: 0.0376 - accuracy: 0.8533
-    Epoch 260/300
-    75/75 [==============================] - 0s 113us/sample - loss: 0.0406 - accuracy: 0.8533
-    Epoch 261/300
-    75/75 [==============================] - 0s 113us/sample - loss: 0.0366 - accuracy: 0.8533
-    Epoch 262/300
-    75/75 [==============================] - 0s 104us/sample - loss: 0.0351 - accuracy: 0.8533
-    Epoch 263/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0352 - accuracy: 0.8533
-    Epoch 264/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0343 - accuracy: 0.8533
-    Epoch 265/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0361 - accuracy: 0.8533
-    Epoch 266/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.0365 - accuracy: 0.8533
-    Epoch 267/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.0387 - accuracy: 0.8533
-    Epoch 268/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.0388 - accuracy: 0.8533
-    Epoch 269/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.0366 - accuracy: 0.8533
-    Epoch 270/300
-    75/75 [==============================] - 0s 119us/sample - loss: 0.0351 - accuracy: 0.8533
-    Epoch 271/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.0392 - accuracy: 0.8533
-    Epoch 272/300
-    75/75 [==============================] - 0s 121us/sample - loss: 0.0377 - accuracy: 0.8533
-    Epoch 273/300
-    75/75 [==============================] - 0s 116us/sample - loss: 0.0390 - accuracy: 0.8533
-    Epoch 274/300
-    75/75 [==============================] - 0s 108us/sample - loss: 0.0367 - accuracy: 0.8533
-    Epoch 275/300
-    75/75 [==============================] - 0s 115us/sample - loss: 0.0407 - accuracy: 0.8533
-    Epoch 276/300
-    75/75 [==============================] - 0s 105us/sample - loss: 0.0405 - accuracy: 0.8533
-    Epoch 277/300
-    75/75 [==============================] - ETA: 0s - loss: 0.0699 - accuracy: 0.80 - 0s 115us/sample - loss: 0.0391 - accuracy: 0.8533
-    Epoch 278/300
-    75/75 [==============================] - 0s 108us/sample - loss: 0.0367 - accuracy: 0.8533
-    Epoch 279/300
-    75/75 [==============================] - 0s 113us/sample - loss: 0.0373 - accuracy: 0.8533
-    Epoch 280/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0370 - accuracy: 0.8533
-    Epoch 281/300
-    75/75 [==============================] - 0s 106us/sample - loss: 0.0417 - accuracy: 0.8533
-    Epoch 282/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0404 - accuracy: 0.8533
-    Epoch 283/300
-    75/75 [==============================] - 0s 107us/sample - loss: 0.0365 - accuracy: 0.8533
-    Epoch 284/300
-    75/75 [==============================] - 0s 115us/sample - loss: 0.0386 - accuracy: 0.8533
-    Epoch 285/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.0365 - accuracy: 0.8533
-    Epoch 286/300
-    75/75 [==============================] - 0s 117us/sample - loss: 0.0353 - accuracy: 0.8533
-    Epoch 287/300
-    75/75 [==============================] - 0s 111us/sample - loss: 0.0384 - accuracy: 0.8533
-    Epoch 288/300
-    75/75 [==============================] - 0s 109us/sample - loss: 0.0373 - accuracy: 0.8533
-    Epoch 289/300
-    75/75 [==============================] - 0s 117us/sample - loss: 0.0388 - accuracy: 0.8533
-    Epoch 290/300
-    75/75 [==============================] - 0s 108us/sample - loss: 0.0398 - accuracy: 0.8533
-    Epoch 291/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0396 - accuracy: 0.8533
-    Epoch 292/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0375 - accuracy: 0.8533
-    Epoch 293/300
-    75/75 [==============================] - 0s 112us/sample - loss: 0.0355 - accuracy: 0.8533
-    Epoch 294/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0371 - accuracy: 0.8533
-    Epoch 295/300
-    75/75 [==============================] - 0s 108us/sample - loss: 0.0339 - accuracy: 0.8533
-    Epoch 296/300
-    75/75 [==============================] - 0s 120us/sample - loss: 0.0371 - accuracy: 0.8533
-    Epoch 297/300
-    75/75 [==============================] - 0s 108us/sample - loss: 0.0354 - accuracy: 0.8533
-    Epoch 298/300
-    75/75 [==============================] - 0s 110us/sample - loss: 0.0364 - accuracy: 0.8533
-    Epoch 299/300
-    75/75 [==============================] - 0s 106us/sample - loss: 0.0370 - accuracy: 0.8533
-    Epoch 300/300
-    75/75 [==============================] - 0s 103us/sample - loss: 0.0391 - accuracy: 0.8533
+    74/74 [==============================] - 0s 133us/sample - loss: 0.0296 - accuracy: 0.8649
 
 
 
@@ -2581,8 +1952,8 @@ print ('Average f1 score', np.mean(test_F1))
 print ('Average Run time', np.mean(time_k))
 ```
 
-    Average f1 score 0.5851851851851851
-    Average Run time 3.6827285289764404
+    Average f1 score 0.6341880341880342
+    Average Run time 3.880180994669596
 
 
 #### Building an LSTM Classifier on the sequences for comparison
@@ -2590,15 +1961,34 @@ We built an LSTM Classifier on the sequences to compare the accuracy.
 
 
 ```python
-X = darpa_data['seq']
+X = data['seq']
 encoded_X = np.ndarray(shape=(len(X),), dtype=list)
 for i in range(0,len(X)):
     encoded_X[i]=X.iloc[i].split("~")
+X
 ```
 
 
+
+
+    0      1~2~3~3~3~3~3~3~1~4~5~1~2~3~3~3~3~3~3~1~4~5~1~...
+    1      6~5~5~6~5~6~5~2~5~5~5~5~5~5~5~5~5~5~5~5~5~5~5~...
+    2      19~19~19~19~19~19~19~19~19~19~19~19~19~19~19~1...
+    3      6~5~5~6~5~6~5~2~5~5~5~5~5~5~5~5~5~5~5~5~5~5~5~...
+    4      5~5~17~5~5~5~5~5~10~2~11~2~11~11~12~11~11~5~2~...
+                                 ...                        
+    106    10~2~11~2~11~11~12~11~11~5~2~11~5~2~5~2~3~14~3...
+    107    5~5~2~5~17~6~5~6~5~5~2~6~17~3~2~2~3~5~2~3~5~6~...
+    108    6~5~6~5~5~6~5~5~6~6~6~6~6~6~6~6~6~6~6~6~6~6~6~...
+    109    6~5~5~6~5~6~5~2~38~2~3~5~22~39~5~5~5~5~5~5~5~5...
+    110    5~6~5~5~10~2~11~2~11~11~12~11~5~2~11~11~12~11~...
+    Name: seq, Length: 111, dtype: object
+
+
+
+
 ```python
-max_seq_length = np.max(darpa_data['seqlen'])
+max_seq_length = np.max(data['seqlen'])
 encoded_X = tf.keras.preprocessing.sequence.pad_sequences(encoded_X, maxlen=max_seq_length)
 ```
 
@@ -2641,134 +2031,17 @@ for train_index, test_index in skf.split(encoded_X, y):
     k+=1
 ```
 
-    Model: "sequential_24"
+    Model: "sequential_13"
     _________________________________________________________________
     Layer (type)                 Output Shape              Param #   
     =================================================================
-    embedding_9 (Embedding)      (None, 1773, 32)          1600      
+    embedding (Embedding)        (None, 1773, 32)          1600      
     _________________________________________________________________
-    lstm_9 (LSTM)                (None, 32)                8320      
+    lstm (LSTM)                  (None, 32)                8320      
     _________________________________________________________________
-    dense_44 (Dense)             (None, 1)                 33        
+    dense_36 (Dense)             (None, 1)                 33        
     _________________________________________________________________
-    activation_44 (Activation)   (None, 1)                 0         
-    =================================================================
-    Total params: 9,953
-    Trainable params: 9,953
-    Non-trainable params: 0
-    _________________________________________________________________
-    Train on 73 samples
-    Epoch 1/50
-    73/73 [==============================] - 5s 71ms/sample - loss: 0.6829 - accuracy: 0.8493
-    Epoch 2/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.6532 - accuracy: 0.8904
-    Epoch 3/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.6164 - accuracy: 0.8904
-    Epoch 4/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.5658 - accuracy: 0.8904
-    Epoch 5/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.4744 - accuracy: 0.8904
-    Epoch 6/50
-    73/73 [==============================] - 3s 46ms/sample - loss: 0.3893 - accuracy: 0.8904
-    Epoch 7/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.3459 - accuracy: 0.8904
-    Epoch 8/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.3521 - accuracy: 0.8904
-    Epoch 9/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.3522 - accuracy: 0.8904
-    Epoch 10/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.3512 - accuracy: 0.8904
-    Epoch 11/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.3452 - accuracy: 0.8904
-    Epoch 12/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.3444 - accuracy: 0.8904
-    Epoch 13/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.3436 - accuracy: 0.8904
-    Epoch 14/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.3431 - accuracy: 0.8904
-    Epoch 15/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.3425 - accuracy: 0.8904
-    Epoch 16/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.3434 - accuracy: 0.8904
-    Epoch 17/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.3402 - accuracy: 0.8904
-    Epoch 18/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.3400 - accuracy: 0.8904
-    Epoch 19/50
-    73/73 [==============================] - 3s 45ms/sample - loss: 0.3378 - accuracy: 0.8904
-    Epoch 20/50
-    73/73 [==============================] - 3s 46ms/sample - loss: 0.3365 - accuracy: 0.8904
-    Epoch 21/50
-    73/73 [==============================] - 3s 45ms/sample - loss: 0.3347 - accuracy: 0.8904
-    Epoch 22/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.3304 - accuracy: 0.8904
-    Epoch 23/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.3252 - accuracy: 0.8904
-    Epoch 24/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.3217 - accuracy: 0.8904
-    Epoch 25/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.3105 - accuracy: 0.8904
-    Epoch 26/50
-    73/73 [==============================] - 3s 43ms/sample - loss: 0.2963 - accuracy: 0.8904
-    Epoch 27/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.2876 - accuracy: 0.8904
-    Epoch 28/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.2561 - accuracy: 0.8904
-    Epoch 29/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.2379 - accuracy: 0.8904
-    Epoch 30/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.2244 - accuracy: 0.8904
-    Epoch 31/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.2243 - accuracy: 0.9041
-    Epoch 32/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.2195 - accuracy: 0.9178
-    Epoch 33/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.1969 - accuracy: 0.9315
-    Epoch 34/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.2076 - accuracy: 0.8767
-    Epoch 35/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.2151 - accuracy: 0.8767
-    Epoch 36/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.1920 - accuracy: 0.9041
-    Epoch 37/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.1963 - accuracy: 0.9041
-    Epoch 38/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.2015 - accuracy: 0.9178
-    Epoch 39/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.1899 - accuracy: 0.8767
-    Epoch 40/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.1780 - accuracy: 0.9178
-    Epoch 41/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.1784 - accuracy: 0.9315
-    Epoch 42/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.1646 - accuracy: 0.9315
-    Epoch 43/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.1633 - accuracy: 0.9315
-    Epoch 44/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.1607 - accuracy: 0.9315
-    Epoch 45/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.1527 - accuracy: 0.9315
-    Epoch 46/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.1644 - accuracy: 0.9315
-    Epoch 47/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.1660 - accuracy: 0.9178
-    Epoch 48/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.1487 - accuracy: 0.9178
-    Epoch 49/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.1992 - accuracy: 0.9315
-    Epoch 50/50
-    73/73 [==============================] - 3s 44ms/sample - loss: 0.1352 - accuracy: 0.9589
-    Model: "sequential_25"
-    _________________________________________________________________
-    Layer (type)                 Output Shape              Param #   
-    =================================================================
-    embedding_10 (Embedding)     (None, 1773, 32)          1600      
-    _________________________________________________________________
-    lstm_10 (LSTM)               (None, 32)                8320      
-    _________________________________________________________________
-    dense_45 (Dense)             (None, 1)                 33        
-    _________________________________________________________________
-    activation_45 (Activation)   (None, 1)                 0         
+    activation_36 (Activation)   (None, 1)                 0         
     =================================================================
     Total params: 9,953
     Trainable params: 9,953
@@ -2776,222 +2049,12 @@ for train_index, test_index in skf.split(encoded_X, y):
     _________________________________________________________________
     Train on 74 samples
     Epoch 1/50
-    74/74 [==============================] - 5s 71ms/sample - loss: 0.6728 - accuracy: 0.8649
+    74/74 [==============================] - 5s 72ms/sample - loss: 0.6894 - accuracy: 0.5676
     Epoch 2/50
-    74/74 [==============================] - 3s 43ms/sample - loss: 0.6344 - accuracy: 0.8649
-    Epoch 3/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.5765 - accuracy: 0.8784
-    Epoch 4/50
-    74/74 [==============================] - 3s 43ms/sample - loss: 0.4936 - accuracy: 0.8784
-    Epoch 5/50
-    74/74 [==============================] - 3s 45ms/sample - loss: 0.3903 - accuracy: 0.8784
-    Epoch 6/50
-    74/74 [==============================] - 3s 45ms/sample - loss: 0.3818 - accuracy: 0.8784
-    Epoch 7/50
-    74/74 [==============================] - 3s 45ms/sample - loss: 0.3885 - accuracy: 0.8784
-    Epoch 8/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.3802 - accuracy: 0.8784
-    Epoch 9/50
-    74/74 [==============================] - 3s 43ms/sample - loss: 0.3717 - accuracy: 0.8784
-    Epoch 10/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.3697 - accuracy: 0.8784
-    Epoch 11/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.3696 - accuracy: 0.8784
-    Epoch 12/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.3687 - accuracy: 0.8784
-    Epoch 13/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.3681 - accuracy: 0.8784
-    Epoch 14/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.3667 - accuracy: 0.8784
-    Epoch 15/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.3658 - accuracy: 0.8784
-    Epoch 16/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.3656 - accuracy: 0.8784
-    Epoch 17/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.3639 - accuracy: 0.8784
-    Epoch 18/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.3611 - accuracy: 0.8784
-    Epoch 19/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.3577 - accuracy: 0.8784
-    Epoch 20/50
-    74/74 [==============================] - 3s 43ms/sample - loss: 0.3554 - accuracy: 0.8784
-    Epoch 21/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.3533 - accuracy: 0.8784
-    Epoch 22/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.3476 - accuracy: 0.8784
-    Epoch 23/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.3439 - accuracy: 0.8784
-    Epoch 24/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.3297 - accuracy: 0.8784
-    Epoch 25/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.3186 - accuracy: 0.8784
-    Epoch 26/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.2966 - accuracy: 0.8784
-    Epoch 27/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.2752 - accuracy: 0.8784
-    Epoch 28/50
-    74/74 [==============================] - 3s 43ms/sample - loss: 0.2624 - accuracy: 0.8784
-    Epoch 29/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.2652 - accuracy: 0.8919
-    Epoch 30/50
-    74/74 [==============================] - 3s 43ms/sample - loss: 0.2547 - accuracy: 0.9054
-    Epoch 31/50
-    74/74 [==============================] - 3s 43ms/sample - loss: 0.2679 - accuracy: 0.9054
-    Epoch 32/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.2486 - accuracy: 0.8919
-    Epoch 33/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.2146 - accuracy: 0.9054
-    Epoch 34/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.2486 - accuracy: 0.9189
-    Epoch 35/50
-    74/74 [==============================] - 3s 43ms/sample - loss: 0.2169 - accuracy: 0.9459
-    Epoch 36/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.2312 - accuracy: 0.8919
-    Epoch 37/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.1977 - accuracy: 0.9459
-    Epoch 38/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.2101 - accuracy: 0.9459
-    Epoch 39/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.2023 - accuracy: 0.9189
-    Epoch 40/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.2046 - accuracy: 0.9324
-    Epoch 41/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.1890 - accuracy: 0.9459
-    Epoch 42/50
-    74/74 [==============================] - 3s 45ms/sample - loss: 0.1811 - accuracy: 0.9459
-    Epoch 43/50
-    74/74 [==============================] - 3s 45ms/sample - loss: 0.1917 - accuracy: 0.9459
-    Epoch 44/50
-    74/74 [==============================] - 3s 45ms/sample - loss: 0.1872 - accuracy: 0.9459
-    Epoch 45/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.1658 - accuracy: 0.9459
-    Epoch 46/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.1739 - accuracy: 0.9459
-    Epoch 47/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.1645 - accuracy: 0.9459
-    Epoch 48/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.1878 - accuracy: 0.9459
-    Epoch 49/50
-    74/74 [==============================] - 3s 43ms/sample - loss: 0.1841 - accuracy: 0.9595
+    74/74 [==============================] - 4s 48ms/sample - loss: 0.6590 - accuracy: 0.8784
+    ...
     Epoch 50/50
-    74/74 [==============================] - 3s 44ms/sample - loss: 0.2039 - accuracy: 0.8919
-    Model: "sequential_26"
-    _________________________________________________________________
-    Layer (type)                 Output Shape              Param #   
-    =================================================================
-    embedding_11 (Embedding)     (None, 1773, 32)          1600      
-    _________________________________________________________________
-    lstm_11 (LSTM)               (None, 32)                8320      
-    _________________________________________________________________
-    dense_46 (Dense)             (None, 1)                 33        
-    _________________________________________________________________
-    activation_46 (Activation)   (None, 1)                 0         
-    =================================================================
-    Total params: 9,953
-    Trainable params: 9,953
-    Non-trainable params: 0
-    _________________________________________________________________
-    Train on 75 samples
-    Epoch 1/50
-    75/75 [==============================] - 5s 66ms/sample - loss: 0.6830 - accuracy: 0.7333
-    Epoch 2/50
-    75/75 [==============================] - 3s 42ms/sample - loss: 0.6459 - accuracy: 0.8800
-    Epoch 3/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.6046 - accuracy: 0.8800
-    Epoch 4/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.5368 - accuracy: 0.8800
-    Epoch 5/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.4176 - accuracy: 0.8800
-    Epoch 6/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.3610 - accuracy: 0.8800
-    Epoch 7/50
-    75/75 [==============================] - 3s 42ms/sample - loss: 0.3993 - accuracy: 0.8800
-    Epoch 8/50
-    75/75 [==============================] - 3s 42ms/sample - loss: 0.3872 - accuracy: 0.8800
-    Epoch 9/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.3789 - accuracy: 0.8800
-    Epoch 10/50
-    75/75 [==============================] - 3s 42ms/sample - loss: 0.3725 - accuracy: 0.8800
-    Epoch 11/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.3679 - accuracy: 0.8800
-    Epoch 12/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.3678 - accuracy: 0.8800
-    Epoch 13/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.3681 - accuracy: 0.8800
-    Epoch 14/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.3682 - accuracy: 0.8800
-    Epoch 15/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.3669 - accuracy: 0.8800
-    Epoch 16/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.3677 - accuracy: 0.8800
-    Epoch 17/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.3657 - accuracy: 0.8800
-    Epoch 18/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.3654 - accuracy: 0.8800
-    Epoch 19/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.3669 - accuracy: 0.8800
-    Epoch 20/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.3650 - accuracy: 0.8800
-    Epoch 21/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.3649 - accuracy: 0.8800
-    Epoch 22/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.3650 - accuracy: 0.8800
-    Epoch 23/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.3633 - accuracy: 0.8800
-    Epoch 24/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.3620 - accuracy: 0.8800
-    Epoch 25/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.3611 - accuracy: 0.8800
-    Epoch 26/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.3595 - accuracy: 0.8800
-    Epoch 27/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.3627 - accuracy: 0.8800
-    Epoch 28/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.3559 - accuracy: 0.8800
-    Epoch 29/50
-    75/75 [==============================] - 3s 42ms/sample - loss: 0.3512 - accuracy: 0.8800
-    Epoch 30/50
-    75/75 [==============================] - 3s 42ms/sample - loss: 0.3507 - accuracy: 0.8800
-    Epoch 31/50
-    75/75 [==============================] - 3s 43ms/sample - loss: 0.3392 - accuracy: 0.8800
-    Epoch 32/50
-    75/75 [==============================] - 3s 42ms/sample - loss: 0.3340 - accuracy: 0.8800
-    Epoch 33/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.3115 - accuracy: 0.8800
-    Epoch 34/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.2962 - accuracy: 0.8800
-    Epoch 35/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.2863 - accuracy: 0.8800
-    Epoch 36/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.2715 - accuracy: 0.8800
-    Epoch 37/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.2471 - accuracy: 0.8800
-    Epoch 38/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.3184 - accuracy: 0.8800
-    Epoch 39/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.2991 - accuracy: 0.8800
-    Epoch 40/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.2846 - accuracy: 0.8800
-    Epoch 41/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.2525 - accuracy: 0.8800
-    Epoch 42/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.2494 - accuracy: 0.8800
-    Epoch 43/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.2456 - accuracy: 0.8800
-    Epoch 44/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.2356 - accuracy: 0.8800
-    Epoch 45/50
-    75/75 [==============================] - 3s 42ms/sample - loss: 0.2281 - accuracy: 0.9067
-    Epoch 46/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.2207 - accuracy: 0.9067
-    Epoch 47/50
-    75/75 [==============================] - 3s 42ms/sample - loss: 0.2165 - accuracy: 0.8800
-    Epoch 48/50
-    75/75 [==============================] - 3s 42ms/sample - loss: 0.2136 - accuracy: 0.8933
-    Epoch 49/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.2141 - accuracy: 0.9067
-    Epoch 50/50
-    75/75 [==============================] - 3s 41ms/sample - loss: 0.2053 - accuracy: 0.9067
+    74/74 [==============================] - 4s 51ms/sample - loss: 0.1596 - accuracy: 0.9324
 
 
 
@@ -3000,229 +2063,417 @@ print ('Average f1 score', np.mean(test_F1))
 print ('Average Run time', np.mean(time_k))
 ```
 
-    Average f1 score 0.5309941520467837
-    Average Run time 161.5511829853058
+    Average f1 score 0.36111111111111116
+    Average Run time 192.46954011917114
 
 
-We find that the LSTM classifier gives an F1 score of 0. This may be improved by changing the model. However, we find that the SGT embedding could work with a small and unbalanced data without the need of a complicated classifier model.
+We find that the LSTM classifier gives a significantly lower F1 score. This may be improved by changing the model. However, we find that the SGT embedding could work with a small and unbalanced data without the need of a complicated classifier model.
 
 LSTM models typically require more data for training and also has significantly more computation time. The LSTM model above took 425.6 secs while the MLP model took just 9.1 secs.
 
+## <a name="sequence-search"></a> Sequence Search
 
-## R: Quick validation of your code
-Apply the algorithm on a sequence `BBACACAABA`. The parts of SGT, W<sup>(0)</sup> and W<sup>(\kappa)</sup>, in Algorithm 1 & 2 in [1], and the resulting SGT estimate will be (line-by-line execution of `main.R`):
+Sequence data sets are generally large. For example, sequences of listening history in music streaming services, such as Pandora, for more than 70M users are huge. In protein data bases there could be even larger size. For instance, the Uniprot data repository has more than 177M sequences.
 
-```
-alphabet_set <- c("A", "B", "C")  # Denoted by variable V in [1]
-seq          <- "BBACACAABA"
+Searching for similar sequences in such large data bases is challenging. SGT embedding provides a simple solution. In the following it will be shown on a protein data set that SGT embedding can be used to compute similarity between a query sequence and the sequence corpus using a dot product. The sequences with the highest dot product are returned as the most similar sequence to the query.
 
-kappa <- 5
-###### Algorithm 1 ######
-sgt_parts_alg1 <- f_sgt_parts(sequence = seq, kappa = kappa, alphabet_set_size = length(alphabet_set))
-print(sgt_parts_alg1)
-```
+### Protein Sequence Search
 
-*Result*
-```
-$W0
-   A B C
-A 10 4 3
-B 11 3 4
-C  7 2 1
+In the following, a sample of 10k protein sequences are used for illustration. The data is taken from https://www.uniprot.org .
 
-$W_kappa
-            A            B            C
-A 0.006874761 6.783349e-03 1.347620e-02
-B 0.013521602 6.737947e-03 4.570791e-05
-C 0.013521604 3.059162e-07 4.539993e-05
+
+```python
+# Loading data
+data = pd.read_csv('data/protein-uniprot-reviewed-Ano-10k.tab', sep='\t')
+
+# Data preprocessing
+corpus = data.loc[:,['Entry','Sequence']]
+corpus.columns = ['id', 'sequence']
+corpus['sequence'] = corpus['sequence'].map(list)
+corpus.head(3)
 ```
 
-```
-sgt <- f_SGT(W_kappa = sgt_parts_alg1$W_kappa, W0 = sgt_parts_alg1$W0, 
-             Len = sgt_parts_alg1$Len, kappa = kappa)  # Set Len = NULL for length-sensitive SGT.
-print(sgt)
-```
-
-*Result*
-```
-          A          B         C
-A 0.3693614 0.44246287 0.5376371
-B 0.4148844 0.46803816 0.1627745
-C 0.4541361 0.06869332 0.2144920
-
-```
-
-Similarly, the execution for Algorithm-2 is shown in `main.R`.
-
-## Illustration and use of the code
-Open file `main.R` and execute line-by-line to understand the process. In this sample execution, we present SGT estimation from either of the two algorithms presented in [1]. The first part is for understanding the SGT computation process.
-
-In the next part we demonstrate sequence clustering using SGT on a synthesized sample dataset. The sequence lengths in the dataset ranges between (45, 711) with a uniform distribution (hence, average length is ~365). Similar sequences in the dataset has some similar patterns, in turn common substrings. These common substrings can be of any length. Also, the order of the instances of these substrings is arbitrary and random in different sequences. For example, the following two sequences have common patterns. One common subtring in both is `QZTA` which is present arbitrarily in both sequences. The two sequences have other common substrings as well. Other than these commonlities there are significant amount of noise present in the sequences. On average, about 40% of the letters in all sequences in the dataset are noise.
-
-```
-AKQZTAEEYTDZUXXIRZSTAYFUIXCPDZUXMCSMEMVDVGMTDRDDEJWNDGDPSVPKJHKQBRKMXHHNLUBXBMHISQ
-WEHGXGDDCADPVKESYQXGRLRZSTAYFUOQZTAWTBRKMXHHNWYRYBRKMXHHNPRNRBRKMXHHNPBMHIUSVXBMHI
-WXQRZSTAYFUCWRZSTAYFUJEJDZUXPUEMVDVGMTOHUDZUXLOQSKESYQXGRCTLBRKMXHHNNJZDZUXTFWZKES
-YQXGRUATSNDGDPWEBNIQZMBNIQKESYQXGRSZTTPTZWRMEMVDVGMTAPBNIRPSADZUXJTEDESOKPTLJEMZTD
-LUIPSMZTDLUIWYDELISBRKMXHHNMADEDXKESYQXGRWEFRZSTAYFUDNDGDPKYEKPTSXMKNDGDPUTIQJHKSD
-ZUXVMZTDLUINFNDGDPMQZTAPPKBMHIUQIUBMHIEKKJHK
-```
-
-```
-SDBRKMXHHNRATBMHIYDZUXMTRMZTDLUIEKDEIBQZTAZOAMZTDLUILHGXGDDCAZEXJHKTDOOHGXGDDCAKZH
-NEMVDVGMTIHZXDEROEQDEGZPPTDBCLBMHIJMMKESYQXGRGDPTNBRKMXHHNGCBYNDGDPKMWKBMHIDQDZUXI
-HKVBMHINQZTAHBRKMXHHNIRBRKMXHHNDISDZUXWBOYEMVDVGMTNTAQZTA
-```
-
-Identifying similar sequences with good accuracy, and also low false positives (calling sequences similar when they are not) is difficult in such situations due to, 
-
-1. _Different lengths of the sequences_: due to different lengths figuring out that two sequences have same inherent pattern is not straightforward. Normalizing the pattern features by the sequence length is a non-trivial problem.
-
-2. _Commonalities are not in order_: as shown in the above example sequences, the common substrings are anywhere. This makes methods such as alignment-based approaches infeasible.
-
-3. _Significant amount of noise_: a good amount of noise is a nemesis to most sequence similarity algorithms. It often results into high false positives.
-
-### SGT Clustering
-
-The dataset here is a good example for the above challenges. We run clustering on the dataset in `main.R`. The sequences in the dataset are from 5 (=K) clusters. We use this ground truth about the number of clusters as input to our execution below. Although, in reality, the true number of clusters is unknown for a data, here we are demonstrating the SGT implementation. Regardless, using the _random search procedure_ discussed in Sec.SGT-ALGORITHM in [1], we could find the number of clusters as equal to 5. For simplicity it has been kept out of this demonstration.
-
-> Other state-of-the-art sequence clustering methods had significantly poorer performance even with the number of true clusters (K=5). HMM had good performance but significantly higher computation time.
 
 
-```
-## The dataset contains all roman letters, A-Z.
-dataset <- read.csv("dataset.csv", header = T, stringsAsFactors = F)
 
-sgt_parts_sequences_in_dataset <- f_SGT_for_each_sequence_in_dataset(sequence_dataset = dataset, 
-                                                                     kappa = 5, alphabet_set = LETTERS, 
-                                                                     spp = NULL, sgt_using_alphabet_positions = T)
-  
-  
-input_data <- f_create_input_kmeans(all_seq_sgt_parts = sgt_parts_sequences_in_dataset, 
-                                    length_normalize = T, 
-                                    alphabet_set_size = 26, 
-                                    kappa = 5, trace = TRUE, 
-                                    inv.powered = T)
-K = 5
-clustering_output <- f_kmeans(input_data = input_data, K = K, alphabet_set_size = 26, trace = T)
+<div>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>id</th>
+      <th>sequence</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>I2WKR6</td>
+      <td>[M, V, H, K, S, D, S, D, E, L, A, A, L, R, A, ...</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>A0A2A6M8K9</td>
+      <td>[M, Q, E, S, L, V, V, R, R, E, T, H, I, A, A, ...</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>A0A3G5KEC3</td>
+      <td>[M, A, S, G, A, Y, S, K, Y, L, F, Q, I, I, G, ...</td>
+    </tr>
+  </tbody>
+</table>
+</div>
 
-cc <- f_clustering_accuracy(actual = c(strtoi(dataset[,1])), pred = c(clustering_output$class), K = K, type = "f1")
-print(cc)
-```
-*Result*
-```
-$cc
-Confusion Matrix and Statistics
 
-          Reference
-Prediction  a  b  c  d  e
-         a 50  0  0  0  0
-         b  0 66  0  0  0
-         c  0  0 60  0  0
-         d  0  0  0 55  0
-         e  0  0  0  0 68
 
-Overall Statistics
-                                     
-               Accuracy : 1          
-                 95% CI : (0.9877, 1)
-    No Information Rate : 0.2274     
-    P-Value [Acc > NIR] : < 2.2e-16  
-                                     
-                  Kappa : 1          
- Mcnemar's Test P-Value : NA         
 
-Statistics by Class:
+```python
+# Protein sequence alphabets
+alphabets = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 
+             'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 
+             'W', 'X', 'Y', 'U', 'O']  # List of amino acids
 
-                     Class: a Class: b Class: c Class: d Class: e
-Sensitivity            1.0000   1.0000   1.0000   1.0000   1.0000
-Specificity            1.0000   1.0000   1.0000   1.0000   1.0000
-Pos Pred Value         1.0000   1.0000   1.0000   1.0000   1.0000
-Neg Pred Value         1.0000   1.0000   1.0000   1.0000   1.0000
-Prevalence             0.1672   0.2207   0.2007   0.1839   0.2274
-Detection Rate         0.1672   0.2207   0.2007   0.1839   0.2274
-Detection Prevalence   0.1672   0.2207   0.2007   0.1839   0.2274
-Balanced Accuracy      1.0000   1.0000   1.0000   1.0000   1.0000
+# Alphabets are known and inputted 
+# as arguments for faster computation
+sgt_ = SGT(alphabets=alphabets, 
+           lengthsensitive=True, 
+           kappa=1, 
+           flatten=True, 
+           mode='multiprocessing')
 
-$F1
-F1 
- 1 
+sgtembedding_df = sgt_.fit_transform(corpus)
+sgtembedding_df = sgtembedding_df.set_index('id')
 ```
 
-As we can see the clustering result is accurate with no false-positives. The f1-score is 1.0.
+    INFO: Pandarallel will run on 7 workers.
+    INFO: Pandarallel will use standard multiprocessing data transfer (pipe) to transfer data between the main process and workers.
 
-> Note: Do not run function `f_clustering_accuracy` when `K` is larger (> 7), because it does a permutation operation which will become expensive.
 
-### PCA on SGT & Clustering
 
-For demonstrating PCA on SGT for dimension reduction and then performing clustering, we added another code snippet. PCA becomes more important on datasets where SGT's are sparse. A sparse SGT is present when the alphabet set is large but the observed sequences contain only a few of those alphabets. For example, the alphabet set for sequence dataset of music listening history will have thousands to millions of songs, but a single sequence will have only a few of them
+```python
+'''
+Search proteins similar to a query protein.
+The approach is to find the SGT embedding of the
+query protein and find its similarity with the
+embeddings of the protein database.
+'''
+
+query_protein = 'MSHVFPIVIDDNFLSPQDLVSAARSGCSLRLHTGVVDKIDRAHRFVLEIAGAEALHYGINTGFGSLCTTHIDPADLSTLQHNLLKSHACGVGPTVSEEVSRVVTLIKLLTFRTGNSGVSLSTVNRIIDLWNHGVVGAIAQKGTVGASGDLAPLAHLFLPLIGLGQVWHRGVLRPSREVMDELKLAPLTLQPKDGLCLTNGVQYLNAWGALSTVRAKRLVALADLCAAMSMMGFSAARSFIEAQIHQTSLHPERGHVALHLRTLTHGSNHADLPHCNPAMEDPYSFRCAPQVHGAARQVVGYLETVIGNECNSVSDNPLVFPDTRQILTCGNLHGQSTAFALDFAAIGITDLSNISERRTYQLLSGQNGLPGFLVAKPGLNSGFMVVQYTSAALLNENKVLSNPASVDTIPTCHLQEDHVSMGGTSAYKLQTILDNCETILAIELMTACQAIDMNPGLQLSERGRAIYEAVREEIPFVKEDHLMAGLISKSRDLCQHSTVIAQQLAEMQAQ'
+
+# Step 1. Compute sgt embedding for the query protein.
+query_protein_sgt_embedding = sgt_.fit(list(query_protein))
+
+# Step 2. Compute the dot product of query embedding 
+# with the protein embedding database.
+similarity = sgtembedding_df.dot(query_protein_sgt_embedding)
+
+# Step 3. Return the top k protein names based on similarity.
+similarity.sort_values(ascending=False)
+```
+
+
+
+
+    id
+    K0ZGN5        2773.749663
+    A0A0Y1CPH7    1617.451379
+    A0A5R8LCJ1    1566.833152
+    A0A290WY40    1448.772820
+    A0A073K6N6    1392.267250
+                     ...     
+    A0A1S7UBK4     160.074989
+    A0A2S7T1R9     156.580584
+    A0A0E0UQV6     155.834932
+    A0A1Y5Y0S0     148.862049
+    B0NRP3         117.656497
+    Length: 10063, dtype: float64
+
+
+
+## <a name="sgt-spark"></a> SGT - Spark for Distributed Computing
+
+As mentioned in the previous section, sequence data sets can be large. SGT complexity is linear with the number of sequences in a data set. Still if the data size is large the computation becomes high. For example, for a set of 1M protein sequences the default SGT mode takes over 24 hours.
+
+Using distributed computing with Spark the runtime can be significantly reduced. For instance, SGT-Spark on the same 1M protein data set took less than 29 minutes.
+
+In the following, Spark implementation for SGT is shown. First, it is applied on a smaller 10k data set for comparison. Then it is applied on 1M data set without any syntactical change.
+
+
+```python
+'''
+Load the data and remove header.
+'''
+data = sc.textFile('data/protein-uniprot-reviewed-Ano-10k.tab')
+ 
+header = data.first() #extract header
+data = data.filter(lambda row: row != header)   #filter out header
+data.take(1)  # See one sample
 
 ```
-######## Clustering on Principal Components of SGT features ########
-num_pcs <- 5  # Number of principal components we want
-input_data_pcs <- f_pcs(input_data = input_data, PCs = num_pcs)$input_data_pcs
 
-clustering_output_pcs <- f_kmeans(input_data = input_data_pcs, K = K, alphabet_set_size = sqrt(num_pcs), trace = F)
+<div class="ansiout"><span class="ansired">Out[</span><span class="ansired">3</span><span class="ansired">]: </span>[&apos;I2WKR6\tI2WKR6_ECOLX\tunreviewed\tType III restriction enzyme, res subunit (EC 3.1.21.5)\tEC90111_4246\tEscherichia coli 9.0111\t786\tMVHKSDSDELAALRAENVRLVSLLEAHGIEWRRKPQSPVPRVSVLSTNEKVALFRRLFRGRDDVWALRWESKTSGKSGYSPACANEWQLGICGKPRIKCGDCAHRQLIPVSDLVIYHHLAGTHTAGMYPLLEDDSCYFLAVDFDEAEWQKDASAFMRSCDELGVPAALEISRSRQGAHVWIFFASRVSAREARRLGTAIISYTCSRTRQLRLGSYDRLFPNQDTMPKGGFGNLIALPLQKRPRELGGSVFVDMNLQPYPDQWAFLVSVIPMNVQDIEPTILRATGSIHPLDVNFINEEDLGTPWEEKKSSGNRLNIAVTEPLIITLANQIYFEKAQLPQALVNRLIRLAAFPNPEFYKAQAMRMSVWNKPRVIGCAENYPQHIALPRGCLDSALSFLRYNNIAAELIDKRFAGTECNAVFTGNLRAEQEEAVSALLRYDTGVLCAPTAFGKTVTAAAVIARRKVNTLILVHRTELLKQWQERLAVFLQVGDSIGIIGGGKHKPCGNIDIAVVQSISRHGEVEPLVRNYGQIIVDECHHIGAVSFSAILKETNARYLLGLTATPIRRDGLHPIIFMYCGAIRHTAARPKESLHNLEVLTRSRFTSGHLPSDARIQDIFREIALDHDRTVAIAEEAMKAFGQGRKVLVLTERTDHLDDIASVMNTLKLSPFVLHSRLSKKKRTMLISGLNALPPDSPRILLSTGRLIGEGFDHPPLDTLILAMPVSWKGTLQQYAGRLHREHTGKSDVRIIDFVDTAYPVLLRMWDKRQRGYKAMGYRIVADGEGLSF&apos;]</div>
 
-cc <- f_clustering_accuracy(actual = c(strtoi(dataset[,1])), pred = c(clustering_output_pcs$class), K = K, type = "f1")  
-print(cc)
+
+
+```python
+# Repartition for increasing the parallel processes
+data = data.repartition(500)
 ```
 
-*Result*
+
+```python
+def preprocessing(line):
+    '''
+    Original data are lines where each line has \t
+    separated values. We are interested in preserving
+    the first value (entry id), tmp[0], and the last value
+    (the sequence), tmp[-1].
+    '''
+    tmp = line.split('\t')
+    id = tmp[0]
+    sequence = list(tmp[-1])
+    return (id, sequence)
+
+processeddata = data.map(lambda line: preprocessing(line))
+processeddata.take(1)  # See one sample
+
 ```
-$cc
-Confusion Matrix and Statistics
-
-          Reference
-Prediction  a  b  c  d  e
-         a 50  0  0  0  0
-         b  0 66  0  0  0
-         c  0  0 60  0  0
-         d  0  0  0 55  0
-         e  0  0  0  0 68
-
-Overall Statistics
-                                     
-               Accuracy : 1          
-                 95% CI : (0.9877, 1)
-    No Information Rate : 0.2274     
-    P-Value [Acc > NIR] : < 2.2e-16  
-                                     
-                  Kappa : 1          
- Mcnemar's Test P-Value : NA         
-
-Statistics by Class:
-
-                     Class: a Class: b Class: c Class: d Class: e
-Sensitivity            1.0000   1.0000   1.0000   1.0000   1.0000
-Specificity            1.0000   1.0000   1.0000   1.0000   1.0000
-Pos Pred Value         1.0000   1.0000   1.0000   1.0000   1.0000
-Neg Pred Value         1.0000   1.0000   1.0000   1.0000   1.0000
-Prevalence             0.1672   0.2207   0.2007   0.1839   0.2274
-Detection Rate         0.1672   0.2207   0.2007   0.1839   0.2274
-Detection Prevalence   0.1672   0.2207   0.2007   0.1839   0.2274
-Balanced Accuracy      1.0000   1.0000   1.0000   1.0000   1.0000
-
-$F1
-F1 
- 1 
- ```
-
-The clustering result remains accurate upon clustering the PCs on the SGT of sequences.
 
 
------------------------
-#### Comments:
-1. Simplicity: SGT's is simple to implement. There is no numerical optimization or other solution search algorithm required to estimate SGT. This makes it deterministic and powerful.
-2. Length sensitive: The length sensitive version of SGT can be easily tried by changing the marked arguments in `main.R`.
+<div class="ansiout"><span class="ansired">Out[</span><span class="ansired">5</span><span class="ansired">]: </span>[(&apos;A0A2E9WIJ1&apos;,
+  [&apos;M&apos;,
+   &apos;Y&apos;,
+   &apos;I&apos;,
+   &apos;F&apos;,
+   &apos;L&apos;,
+   &apos;T&apos;,
+   &apos;L&apos;,
+	...   
+   &apos;A&apos;,
+   &apos;K&apos;,
+   &apos;L&apos;,
+   &apos;D&apos;,
+   &apos;K&apos;,
+   &apos;N&apos;,
+   &apos;D&apos;])]</div>
 
-#### Note:
-1. Small alphabet set: If the alphabet set is small (< 4), SGT's performance may not be good. This is because the feature space becomes too small.
-2. Faster implementation: The provided code is a research level code, not optimized for the best of speed. Significant speed improvements can be made, e.g. multithreading the SGT estimation for sequences in a dataset.
 
-#### Additional resource:
-Python implementation: Please refer to 
 
-https://github.com/datashinobi/Sequence-Graph-transform
 
-Thanks to Yassine for providing the Python implementation.
+
+```python
+# Protein sequence alphabets
+alphabets = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 
+             'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 
+             'W', 'X', 'Y', 'U', 'O']  # List of amino acids
+```
+
+
+```python
+'''
+Spark approach.
+In this approach the alphabets argument has to
+be passed to the SGT class definition.
+The SGT.fit() is then called in parallel.
+'''
+sgt_ = sgt.SGT(alphabets=alphabets, 
+               kappa=1, 
+               lengthsensitive=True, 
+               flatten=True)
+rdd = processeddata.map(lambda x: (x[0], list(sgt_.fit(x[1]))))
+sgtembeddings = rdd.collect()
+# Command took 29.66 seconds -- by cranjan@processminer.com at 4/22/2020, 12:31:23 PM on databricks
+```
+
+### Compare with the default SGT mode
+
+
+```python
+# Loading data
+data = pd.read_csv('data/protein-uniprot-reviewed-Ano-10k.tab', sep='\t')
+
+# Data preprocessing
+corpus = data.loc[:,['Entry','Sequence']]
+corpus.columns = ['id', 'sequence']
+corpus['sequence'] = corpus['sequence'].map(list)
+
+```
+
+
+```python
+sgt_ = sgt.SGT(alphabets=alphabets, 
+               lengthsensitive=True, 
+               kappa=1, 
+               flatten=True, 
+               mode='default')
+
+sgtembedding_df = sgt_.fit_transform(corpus)
+# Command took 13.08 minutes -- by cranjan@processminer.com at 4/22/2020, 1:48:02 PM on databricks
+```
+
+### 1M Protein Database
+
+Protein 1M sequence data set is embedded here. The data set is available [here](https://mega.nz/file/1qAXhSAS#l7E60cLJzMGtFQzeHZL9PI8yX4tRQcAMFRN2xeHK81w).
+
+```python
+'''
+Load the data and remove header.
+'''
+data = sc.textFile('data/protein-uniprot-reviewed-Ano-1M.tab')
+ 
+header = data.first() #extract header
+data = data.filter(lambda row: row != header)   #filter out header
+data.take(1)  # See one sample
+```
+
+
+
+```python
+# Repartition for increasing the parallel processes
+data = data.repartition(10000)
+```
+
+
+```python
+processeddata = data.map(lambda line: preprocessing(line))
+processeddata.take(1)  # See one sample
+
+# [('A0A2E9WIJ1',
+#   ['M','Y','I','F','L','T','L','A','L','F','S',...,'F','S','I','F','A','K','L','D','K','N','D'])]
+```
+
+
+```python
+# Protein sequence alphabets
+alphabets = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 
+             'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 
+             'W', 'X', 'Y', 'U', 'O']  # List of amino acids
+```
+
+
+```python
+'''
+Spark approach.
+In this approach the alphabets argument has to
+be passed to the SGT class definition.
+The SGT.fit() is then called in parallel.
+'''
+sgt_ = sgt.SGT(alphabets=alphabets, 
+               kappa=1, 
+               lengthsensitive=True, 
+               flatten=True)
+rdd = processeddata.map(lambda x: (x[0], list(sgt_.fit(x[1]))))
+sgtembeddings = rdd.collect()
+# Command took 28.98 minutes -- by cranjan@processminer.com at 4/22/2020, 3:16:41 PM on databricks
+```
+
+
+```python
+'''OPTIONAL.
+Save the embeddings for future use or 
+production deployment.'''
+# Save for deployment
+# pickle.dump(sgtembeddings, 
+#             open("data/protein-sgt-embeddings-1M.pkl", "wb"))
+# The pickle dump is shared at https://mega.nz/file/hiAxAAoI#SStAIn_FZjAHvXSpXfdy8VpISG6rusHRf9HlUSqwcsw
+# sgtembeddings = pickle.load(open("data/protein-sgt-embeddings-1M.pkl", "rb"))
+```
+
+The pickle dump is shared [here](https://mega.nz/file/hiAxAAoI#SStAIn_FZjAHvXSpXfdy8VpISG6rusHRf9HlUSqwcsw).
+
+### Sequence Search using SGT - Spark
+
+Since `sgtembeddings` on the 1M data set is large it is recommended to use distributed computing to find similar proteins during a search.
+
+
+```python
+sgtembeddings_rdd = sc.parallelize(list(dict(sgtembeddings).items()))
+sgtembeddings_rdd = sgtembeddings_rdd.repartition(10000)
+```
+
+
+```python
+'''
+Search proteins similar to a query protein.
+The approach is to find the SGT embedding of the
+query protein and find its similarity with the
+embeddings of the protein database.
+'''
+
+query_protein = 'MSHVFPIVIDDNFLSPQDLVSAARSGCSLRLHTGVVDKIDRAHRFVLEIAGAEALHYGINTGFGSLCTTHIDPADLSTLQHNLLKSHACGVGPTVSEEVSRVVTLIKLLTFRTGNSGVSLSTVNRIIDLWNHGVVGAIAQKGTVGASGDLAPLAHLFLPLIGLGQVWHRGVLRPSREVMDELKLAPLTLQPKDGLCLTNGVQYLNAWGALSTVRAKRLVALADLCAAMSMMGFSAARSFIEAQIHQTSLHPERGHVALHLRTLTHGSNHADLPHCNPAMEDPYSFRCAPQVHGAARQVVGYLETVIGNECNSVSDNPLVFPDTRQILTCGNLHGQSTAFALDFAAIGITDLSNISERRTYQLLSGQNGLPGFLVAKPGLNSGFMVVQYTSAALLNENKVLSNPASVDTIPTCHLQEDHVSMGGTSAYKLQTILDNCETILAIELMTACQAIDMNPGLQLSERGRAIYEAVREEIPFVKEDHLMAGLISKSRDLCQHSTVIAQQLAEMQAQ'
+
+# Step 1. Compute sgt embedding for the query protein.
+query_protein_sgt_embedding = sgt_.fit(list(query_protein))
+
+# Step 2. Broadcast the embedding to the cluster.
+query_protein_sgt_embedding_broadcasted = sc.broadcast(list(query_protein_sgt_embedding))
+
+# Step 3. Compute similarity between each sequence embedding and the query.
+similarity = sgtembeddings_rdd.map(lambda x: (x[0], 
+                                              np.dot(query_protein_sgt_embedding_broadcasted.value, 
+                                                     x[1]))).collect()
+
+# Step 4. Show the most similar sequences with the query.
+pd.DataFrame(similarity).sort_values(by=1, ascending=False)
+```
+
+## <a name="datasets"></a> Datasets
+
+Data sets provided with this release are,
+
+### Protein Dataset - 2k
+
+Protein sequences data set taken from https://www.uniprot.org. The data set has reviewed and annotated proteins. The fields in the data set are,
+
+- Entry
+- Entry name	
+- Status	
+- Protein names	
+- Gene names	
+- Organism	
+- Length	
+- Sequence	
+- Function [CC]	
+- Features	
+- Taxonomic lineage (all)
+- Protein families
+
+There are a total of 2113 samples (protein sequences). The proteins have one of the following two functions,
+
+- Binds to DNA and alters its conformation. May be involved in regulation of gene expression, nucleoid organization and DNA protection.
+- Might take part in the signal recognition particle (SRP) pathway. This is inferred from the conservation of its genetic proximity to ftsY/ffh. May be a regulatory protein.
+
+
+The data set has about 40:60 class distribution.
+
+### Darpa Weblog Network Intrusion Dataset
+
+This is a processed weblog data provided by DARPA in: DARPA INTRUSION DETECTION EVALUATION DATASET. The link to it is shared by MIT at https://www.ll.mit.edu/r-d/datasets/1998-darpa-intrusion-detection-evaluation-dataset .
+
+The available data set is a weblog dump with timestamps. They are converted to sequences and shared here. A sequence is labeled as 1 if it was a potential intrusion, otherwise 0. 
+
+The data has 112 samples with imbalanced class distribution of about 10% positive labeled samples.
+
+The available fields are,
+
+- timeduration
+- seqlen
+- seq
+- class
+
+### Protein Sequence - 10k, 1M and 3M
+
+Three protein sequence data sets of size 10k, 1 Million, and 3 Million are provided. The 10k data set is available in GitHub, while the latter two are available publicly [here](https://mega.nz/folder/MqAzmKqS#2jqJKJifOgnFACP9GqX6QQ).
+
+The fields in these data sets are,
+
+- Entry	
+- Entry name	
+- Protein names	
+- Gene names	
+- Organism
+- Length
+- Sequence
+
+The source of these data are [https://www.uniprot.org](https://www.uniprot.org).
