@@ -39,7 +39,7 @@ sgt <- f_SGT(W_kappa = sgt_parts_alg2$W_kappa, W0 = sgt_parts_alg2$W0,
 ############################################################################
 
 ## The dataset contains all roman letters, A-Z.
-dataset <- read.csv("dataset.csv", header = T, stringsAsFactors = F)
+dataset <- read.csv("../data/simulated-sequence-dataset.csv", header = T, stringsAsFactors = F)
 
 sgt_parts_sequences_in_dataset <- f_SGT_for_each_sequence_in_dataset(sequence_dataset = dataset, 
                                                                      kappa = 5, alphabet_set = LETTERS, 

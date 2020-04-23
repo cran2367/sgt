@@ -2212,8 +2212,9 @@ data.take(1)  # See one sample
 
 ```
 
-<div class="ansiout"><span class="ansired">Out[</span><span class="ansired">3</span><span class="ansired">]: </span>[&apos;I2WKR6\tI2WKR6_ECOLX\tunreviewed\tType III restriction enzyme, res subunit (EC 3.1.21.5)\tEC90111_4246\tEscherichia coli 9.0111\t786\tMVHKSDSDELAALRAENVRLVSLLEAHGIEWRRKPQSPVPRVSVLSTNEKVALFRRLFRGRDDVWALRWESKTSGKSGYSPACANEWQLGICGKPRIKCGDCAHRQLIPVSDLVIYHHLAGTHTAGMYPLLEDDSCYFLAVDFDEAEWQKDASAFMRSCDELGVPAALEISRSRQGAHVWIFFASRVSAREARRLGTAIISYTCSRTRQLRLGSYDRLFPNQDTMPKGGFGNLIALPLQKRPRELGGSVFVDMNLQPYPDQWAFLVSVIPMNVQDIEPTILRATGSIHPLDVNFINEEDLGTPWEEKKSSGNRLNIAVTEPLIITLANQIYFEKAQLPQALVNRLIRLAAFPNPEFYKAQAMRMSVWNKPRVIGCAENYPQHIALPRGCLDSALSFLRYNNIAAELIDKRFAGTECNAVFTGNLRAEQEEAVSALLRYDTGVLCAPTAFGKTVTAAAVIARRKVNTLILVHRTELLKQWQERLAVFLQVGDSIGIIGGGKHKPCGNIDIAVVQSISRHGEVEPLVRNYGQIIVDECHHIGAVSFSAILKETNARYLLGLTATPIRRDGLHPIIFMYCGAIRHTAARPKESLHNLEVLTRSRFTSGHLPSDARIQDIFREIALDHDRTVAIAEEAMKAFGQGRKVLVLTERTDHLDDIASVMNTLKLSPFVLHSRLSKKKRTMLISGLNALPPDSPRILLSTGRLIGEGFDHPPLDTLILAMPVSWKGTLQQYAGRLHREHTGKSDVRIIDFVDTAYPVLLRMWDKRQRGYKAMGYRIVADGEGLSF&apos;]</div>
-
+```
+[&apos;I2WKR6\tI2WKR6_ECOLX\tunreviewed\tType III restriction enzyme, res subunit (EC 3.1.21.5)\tEC90111_4246\tEscherichia coli 9.0111\t786\tMVHKSDSDELAALRAENVRLVSLLEAHGIEWRRKPQSPVPRVSVLSTNEKVALFRRLFRGRDDVWALRWESKTSGKSGYSPACANEWQLGICGKPRIKCGDCAHRQLIPVSDLVIYHHLAGTHTAGMYPLLEDDSCYFLAVDFDEAEWQKDASAFMRSCDELGVPAALEISRSRQGAHVWIFFASRVSAREARRLGTAIISYTCSRTRQLRLGSYDRLFPNQDTMPKGGFGNLIALPLQKRPRELGGSVFVDMNLQPYPDQWAFLVSVIPMNVQDIEPTILRATGSIHPLDVNFINEEDLGTPWEEKKSSGNRLNIAVTEPLIITLANQIYFEKAQLPQALVNRLIRLAAFPNPEFYKAQAMRMSVWNKPRVIGCAENYPQHIALPRGCLDSALSFLRYNNIAAELIDKRFAGTECNAVFTGNLRAEQEEAVSALLRYDTGVLCAPTAFGKTVTAAAVIARRKVNTLILVHRTELLKQWQERLAVFLQVGDSIGIIGGGKHKPCGNIDIAVVQSISRHGEVEPLVRNYGQIIVDECHHIGAVSFSAILKETNARYLLGLTATPIRRDGLHPIIFMYCGAIRHTAARPKESLHNLEVLTRSRFTSGHLPSDARIQDIFREIALDHDRTVAIAEEAMKAFGQGRKVLVLTERTDHLDDIASVMNTLKLSPFVLHSRLSKKKRTMLISGLNALPPDSPRILLSTGRLIGEGFDHPPLDTLILAMPVSWKGTLQQYAGRLHREHTGKSDVRIIDFVDTAYPVLLRMWDKRQRGYKAMGYRIVADGEGLSF&apos;]
+```
 
 
 ```python
@@ -2422,6 +2423,14 @@ pd.DataFrame(similarity).sort_values(by=1, ascending=False)
 
 Data sets provided with this release are,
 
+### Simulated Sequence Dataset
+
+A benchmark simulated sequence data set with labels are provided. There are 5 labels and a total of 300 samples. The sequence lengths range from 50-800.
+
+Location:
+
+`data/simulated-sequence-dataset.csv`
+
 ### Protein Dataset - 2k
 
 Protein sequences data set taken from https://www.uniprot.org. The data set has reviewed and annotated proteins. The fields in the data set are,
@@ -2447,6 +2456,10 @@ There are a total of 2113 samples (protein sequences). The proteins have one of 
 
 The data set has about 40:60 class distribution.
 
+Location:
+`data/protein_classification.csv`
+
+
 ### Darpa Weblog Network Intrusion Dataset
 
 This is a processed weblog data provided by DARPA in: DARPA INTRUSION DETECTION EVALUATION DATASET. The link to it is shared by MIT at https://www.ll.mit.edu/r-d/datasets/1998-darpa-intrusion-detection-evaluation-dataset .
@@ -2462,9 +2475,14 @@ The available fields are,
 - seq
 - class
 
+Location:
+
+`data/darpa_data.csv`
+
+
 ### Protein Sequence - 10k, 1M and 3M
 
-Three protein sequence data sets of size 10k, 1 Million, and 3 Million are provided. The 10k data set is available in GitHub, while the latter two are available publicly [here](https://mega.nz/folder/MqAzmKqS#2jqJKJifOgnFACP9GqX6QQ).
+Three protein sequence data sets of size 10k, 1 Million, and 3 Million are provided. The 10k data set is available in GitHub, while the latter two are available publicly [here](https://mega.nz/folder/MqAzmKqS#2jqJKJifOgnFACP9GqX6QQ) https://mega.nz/folder/MqAzmKqS#2jqJKJifOgnFACP9GqX6QQ .
 
 The fields in these data sets are,
 
@@ -2476,4 +2494,14 @@ The fields in these data sets are,
 - Length
 - Sequence
 
-The source of these data are [https://www.uniprot.org](https://www.uniprot.org).
+The source of these data are https://www.uniprot.org .
+
+Location:
+
+10k: `data/protein-uniprot-reviewed-Ano-10k.tab`
+
+1M: `https://mega.nz/folder/MqAzmKqS#2jqJKJifOgnFACP9GqX6QQ/file/t7YlUQTK`
+
+3M: `https://mega.nz/folder/MqAzmKqS#2jqJKJifOgnFACP9GqX6QQ/file/InAzwYDa`
+
+
